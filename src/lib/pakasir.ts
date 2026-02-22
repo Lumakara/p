@@ -7,18 +7,9 @@ const PAKASIR_API_URL = 'https://app.pakasir.com/api';
 const PAKASIR_PROJECT_SLUG = import.meta.env.VITE_PAKASIR_SLUG || 'your-project-slug';
 const PAKASIR_API_KEY = import.meta.env.VITE_PAKASIR_API_KEY || '';
 
-export type PaymentMethod = 
-  | 'qris' 
-  | 'bni_va' 
-  | 'bri_va' 
-  | 'permata_va' 
-  | 'cimb_niaga_va'
-  | 'maybank_va'
-  | 'bnc_va'
-  | 'sampoerna_va'
-  | 'atm_bersama_va'
-  | 'artha_graha_va'
-  | 'paypal';
+// Re-export PaymentMethod from types for consistency
+import type { PaymentMethod } from '@/types';
+export type { PaymentMethod };
 
 export interface PaymentRequest {
   orderId: string;
@@ -42,6 +33,8 @@ export interface PaymentResponse {
   expired_at: string;
   qr_string?: string;
   qr_code_url?: string;
+  va_number?: string;
+  payment_url?: string;
 }
 
 export interface PaymentStatus {

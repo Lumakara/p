@@ -66,7 +66,7 @@ export function CartSection() {
   // Calculate discount
   const totalDiscount = selectedItems.reduce((sum, item) => {
     const product = products.find(p => p.id === item.productId);
-    if (product?.discount_price && product.discount_price < product.base_price) {
+    if (product?.discount_price && product.base_price && product.discount_price < product.base_price) {
       return sum + (product.base_price - product.discount_price) * item.quantity;
     }
     return sum;
@@ -236,7 +236,7 @@ export function CartSection() {
                       alt={item.title}
                       className="w-20 h-20 object-cover rounded-xl"
                     />
-                    {product?.discount_price && (
+                    {product?.discount_price && product?.base_price && (
                       <Badge className="absolute -top-1 -left-1 bg-red-500 text-[10px]">
                         -{Math.round(((product.base_price - product.discount_price) / product.base_price) * 100)}%
                       </Badge>
@@ -251,7 +251,7 @@ export function CartSection() {
                       <p className={`font-bold ${isDarkMode ? 'text-white' : ''}`}>
                         Rp {(item.price * item.quantity).toLocaleString('id-ID')}
                       </p>
-                      {product?.discount_price && (
+                      {product?.discount_price && product?.base_price && (
                         <span className="text-xs text-gray-400 line-through">
                           Rp {(product.base_price * item.quantity).toLocaleString('id-ID')}
                         </span>

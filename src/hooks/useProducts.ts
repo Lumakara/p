@@ -1,234 +1,196 @@
-import { useEffect, useState, useCallback } from 'react';
-import { ProductService, type Product } from '@/lib/supabase';
+import { useEffect, useState } from 'react';
 import { useAppStore } from '@/store/appStore';
+import type { Product } from '@/types';
+
+const mockProducts: Product[] = [
+  {
+    id: 'wifi-install',
+    title: 'WiFi & Network Installation',
+    description: 'Professional WiFi network setup and optimization service for homes and offices.',
+    fullDescription: 'Get a professional WiFi network setup that covers your entire space with strong signal. We optimize placement for maximum coverage and configure security settings to protect your network.',
+    icon: '/images/products/wifi.svg',
+    category: 'networking',
+    rating: 4.9,
+    reviews: 128,
+    tiers: [
+      { name: 'Basic', price: 350000, features: ['Up to 100 Mbps', 'Single Floor Coverage', 'Basic Security Setup', '1 Month Support'] },
+      { name: 'Standard', price: 500000, features: ['Up to 300 Mbps', 'Multi-Floor Coverage', 'Advanced Security', '3 Months Support', 'Guest Network'] },
+      { name: 'Premium', price: 750000, features: ['Up to 1 Gbps', 'Whole Building Coverage', 'Enterprise Security', '6 Months Support', 'Guest Network', 'Parental Controls'] },
+    ],
+    features: ['Professional Installation', 'Coverage Optimization', 'Security Configuration', 'Device Connection Support'],
+  },
+  {
+    id: 'cctv-setup',
+    title: 'CCTV Installation Service',
+    description: 'Complete CCTV system installation with remote monitoring setup.',
+    fullDescription: 'Professional CCTV installation service with high-quality cameras, remote viewing setup, and motion detection configuration. Keep your property secure 24/7.',
+    icon: '/images/products/cctv.svg',
+    category: 'security',
+    rating: 4.8,
+    reviews: 95,
+    tiers: [
+      { name: '2 Cameras', price: 1200000, features: ['2 HD Cameras', 'DVR/NVR Included', '50m Cable', 'Basic App Setup', '1 Month Warranty'] },
+      { name: '4 Cameras', price: 2200000, features: ['4 HD Cameras', 'DVR/NVR Included', '100m Cable', 'Advanced App Setup', '3 Months Warranty', 'Cloud Storage Setup'] },
+      { name: '8 Cameras', price: 4000000, features: ['8 HD Cameras', 'DVR/NVR Included', '200m Cable', 'Advanced App Setup', '6 Months Warranty', 'Cloud Storage', 'Night Vision'] },
+    ],
+    features: ['HD Quality Recording', 'Remote Mobile Access', 'Motion Detection Alerts', 'Night Vision Capable'],
+  },
+  {
+    id: 'code-repair',
+    title: 'Code Repair & Debug',
+    description: 'Expert debugging and code repair service for any programming language.',
+    fullDescription: 'Stuck with a bug? Our experienced developers can help fix errors in any programming language including JavaScript, Python, Java, C++, and more.',
+    icon: '/images/products/code.svg',
+    category: 'development',
+    rating: 5.0,
+    reviews: 210,
+    tiers: [
+      { name: 'Small Fix', price: 150000, features: ['1-3 Bugs Fixed', '48 Hour Delivery', 'Basic Documentation', '1 Revision'] },
+      { name: 'Medium Fix', price: 350000, features: ['4-8 Bugs Fixed', '72 Hour Delivery', 'Detailed Documentation', '3 Revisions', 'Code Review'] },
+      { name: 'Complex Fix', price: 700000, features: ['9-15 Bugs Fixed', '5 Day Delivery', 'Complete Documentation', 'Unlimited Revisions', 'Code Review', 'Optimization'] },
+    ],
+    features: ['Any Programming Language', 'Bug Documentation', 'Code Optimization', 'Performance Testing'],
+  },
+  {
+    id: 'media-editing',
+    title: 'Photo & Video Editing',
+    description: 'Professional photo retouching and video editing services.',
+    fullDescription: 'Transform your photos and videos with professional editing. From color correction to complex compositing, we deliver stunning results.',
+    icon: '/images/products/media.svg',
+    category: 'media',
+    rating: 4.7,
+    reviews: 156,
+    tiers: [
+      { name: 'Photo', price: 50000, features: ['Up to 10 Photos', 'Color Correction', 'Basic Retouching', '48 Hour Delivery'] },
+      { name: 'Video', price: 250000, features: ['Up to 5 Minutes', 'Color Grading', 'Audio Sync', 'Transitions', '3 Day Delivery'] },
+      { name: 'Pro Package', price: 500000, features: ['20 Photos + 10 Min Video', 'Advanced Retouching', 'Motion Graphics', 'Sound Design', '5 Day Delivery'] },
+    ],
+    features: ['Adobe Creative Suite', '4K Resolution Support', 'Revision Included', 'Source Files Included'],
+  },
+  {
+    id: 'vps-hosting',
+    title: 'VPS Hosting Setup',
+    description: 'Virtual Private Server setup and configuration service.',
+    fullDescription: 'Get your VPS server configured professionally with security hardening, software installation, and monitoring setup.',
+    icon: '/images/products/server.svg',
+    category: 'hosting',
+    rating: 4.9,
+    reviews: 89,
+    tiers: [
+      { name: 'Basic', price: 200000, features: ['OS Installation', 'Basic Security', 'Web Server Setup', 'Email Configuration', '1 Month Support'] },
+      { name: 'Business', price: 450000, features: ['OS Installation', 'Advanced Security', 'Web + DB Server', 'SSL Setup', 'Backup Configuration', '3 Months Support'] },
+      { name: 'Enterprise', price: 800000, features: ['Custom OS', 'Enterprise Security', 'Full Stack Setup', 'Load Balancer', 'Monitoring', '6 Months Support'] },
+    ],
+    features: ['Linux/Windows Support', 'Security Hardening', 'Performance Optimization', '24/7 Monitoring'],
+  },
+  {
+    id: 'web-dev',
+    title: 'Website Development',
+    description: 'Custom website development from landing pages to full web apps.',
+    fullDescription: 'Professional website development services. We create responsive, fast, and SEO-friendly websites tailored to your needs.',
+    icon: '/images/products/web.svg',
+    category: 'development',
+    rating: 4.8,
+    reviews: 145,
+    tiers: [
+      { name: 'Landing Page', price: 1200000, features: ['1 Page Design', 'Mobile Responsive', 'Basic SEO', 'Contact Form', '1 Week Delivery'] },
+      { name: 'Business', price: 3500000, features: ['Up to 5 Pages', 'CMS Integration', 'Advanced SEO', 'Analytics Setup', '3 Weeks Delivery', '2 Revisions'] },
+      { name: 'E-Commerce', price: 8000000, features: ['Unlimited Products', 'Payment Gateway', 'Admin Dashboard', 'User Accounts', '6 Weeks Delivery', 'Unlimited Revisions'] },
+    ],
+    features: ['React/Next.js/Vue', 'Mobile Responsive', 'SEO Optimized', 'Fast Loading Speed'],
+  },
+];
 
 export const useProducts = () => {
   const { products, setProducts } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = async () => {
     setIsLoading(true);
-    setError(null);
     try {
-      const data = await ProductService.getAll();
-      setProducts(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch products');
-      // Fallback to mock data if Supabase is not configured
-      loadMockProducts();
+      // Check localStorage first
+      const stored = localStorage.getItem('digital-store-products');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setProducts(parsed);
+      } else {
+        // Use mock data
+        setProducts(mockProducts);
+        localStorage.setItem('digital-store-products', JSON.stringify(mockProducts));
+      }
+    } catch (err) {
+      console.error('Error loading products:', err);
+      setError('Failed to load products');
+      setProducts(mockProducts);
     } finally {
       setIsLoading(false);
     }
-  }, [setProducts]);
+  };
 
-  const loadMockProducts = () => {
-    const mockProducts: Product[] = [
-      {
-        id: 'wifi',
-        title: 'Wi-Fi Installation Service',
-        category: 'installation',
-        base_price: 89000,
-        discount_price: 79000,
-        stock: 100,
-        image: 'https://readdy.ai/api/search-image?query=Professional%20Wi-Fi%20installation%20service%20setup&width=300&height=200',
-        icon: 'https://readdy.ai/api/search-image?query=icon%203D%20wifi%20router&width=150&height=150',
-        rating: 4.8,
-        reviews: 156,
-        duration: '2-3 jam',
-        description: 'Pemasangan dan konfigurasi jaringan wireless profesional untuk rumah dan kantor.',
-        tags: ['network', 'internet', 'setup'],
-        tiers: [
-          { name: 'Basic', price: 89000, features: ['Setup 1 router', 'Konfigurasi dasar', 'Optimasi kecepatan', 'Garansi 1 tahun'] },
-          { name: 'Standard', price: 149000, features: ['Setup mesh network', 'Keamanan advanced', 'Optimasi multi device', 'Guest network', 'Garansi 2 tahun'] },
-          { name: 'Premium', price: 249000, features: ['Enterprise mesh system', 'Security suite', 'IoT management', 'Priority support', 'Garansi 3 tahun'] }
-        ],
-        related: ['vps', 'code']
-      },
-      {
-        id: 'cctv',
-        title: 'CCTV Security System',
-        category: 'installation',
-        base_price: 199000,
-        discount_price: 179000,
-        stock: 50,
-        image: 'https://readdy.ai/api/search-image?query=Professional%20CCTV%20security%20camera%20installation&width=300&height=200',
-        icon: 'https://readdy.ai/api/search-image?query=icon%203D%20security%20camera&width=150&height=150',
-        rating: 4.7,
-        reviews: 89,
-        duration: '4-6 jam',
-        description: 'Instalasi kamera keamanan lengkap dengan monitoring dan akses mobile.',
-        tags: ['security', 'camera', 'monitoring'],
-        tiers: [
-          { name: 'Basic', price: 199000, features: ['2 kamera HD', 'Recording dasar', 'Akses mobile app', 'Storage 1 TB'] },
-          { name: 'Standard', price: 399000, features: ['4 kamera 4K', 'Night vision', 'Motion detection', 'Cloud backup', 'Storage 2 TB'] },
-          { name: 'Premium', price: 699000, features: ['8 kamera 4K', 'AI detection', '24/7 monitoring', 'Professional monitoring', 'Storage 4 TB'] }
-        ],
-        related: ['wifi', 'vps']
-      },
-      {
-        id: 'code',
-        title: 'Code Error Repair',
-        category: 'technical',
-        base_price: 59000,
-        discount_price: 49000,
-        stock: 200,
-        image: 'https://readdy.ai/api/search-image?query=software%20developer%20debugging%20code&width=300&height=200',
-        icon: 'https://readdy.ai/api/search-image?query=icon%203D%20code%20debugging&width=150&height=150',
-        rating: 4.9,
-        reviews: 234,
-        duration: '1-4 jam',
-        description: 'Debugging dan optimasi kode expert untuk website dan aplikasi.',
-        tags: ['debugging', 'coding', 'development'],
-        tiers: [
-          { name: 'Basic', price: 59000, features: ['Identifikasi bug', 'Fix sederhana', 'Code review', 'Dokumentasi'] },
-          { name: 'Standard', price: 129000, features: ['Complex debugging', 'Performance optimization', 'Security audit', 'Testing'] },
-          { name: 'Premium', price: 249000, features: ['Full code refactoring', 'Architecture review', 'Performance tuning', 'Long-term support'] }
-        ],
-        related: ['vps', 'wifi']
-      },
-      {
-        id: 'photo',
-        title: 'Photo Editing',
-        category: 'creative',
-        base_price: 29000,
-        discount_price: 25000,
-        stock: 150,
-        image: 'https://readdy.ai/api/search-image?query=photo%20editing%20workspace&width=300&height=200',
-        icon: 'https://readdy.ai/api/search-image?query=icon%203D%20camera%20editing&width=150&height=150',
-        rating: 4.6,
-        reviews: 120,
-        duration: '1-2 hari',
-        description: 'Retouching dan enhancement gambar profesional.',
-        tags: ['photo', 'editing', 'creative'],
-        tiers: [
-          { name: 'Basic', price: 29000, features: ['Color correction', 'Basic retouching', 'Format conversion', '5 revisi'] },
-          { name: 'Standard', price: 79000, features: ['Advanced retouching', 'Background removal', 'Skin smoothing', 'Unlimited revisi'] },
-          { name: 'Premium', price: 149000, features: ['High-end editing', 'Composite work', 'RAW processing', 'Priority delivery'] }
-        ],
-        related: ['video', 'code']
-      },
-      {
-        id: 'video',
-        title: 'Video Editing',
-        category: 'creative',
-        base_price: 79000,
-        discount_price: 69000,
-        stock: 80,
-        image: 'https://readdy.ai/api/search-image?query=video%20editing%20studio&width=300&height=200',
-        icon: 'https://readdy.ai/api/search-image?query=icon%203D%20video%20camera&width=150&height=150',
-        rating: 4.8,
-        reviews: 95,
-        duration: '2-5 hari',
-        description: 'Editing video dan post-production profesional.',
-        tags: ['video', 'editing', 'production'],
-        tiers: [
-          { name: 'Basic', price: 79000, features: ['Basic cuts', 'Transitions', 'Audio sync', 'Output 1080p'] },
-          { name: 'Standard', price: 199000, features: ['Color grading', 'Motion graphics', 'Sound mixing', 'Output 4K'] },
-          { name: 'Premium', price: 399000, features: ['VFX', 'Animation', 'Professional sound design', 'Cinema quality'] }
-        ],
-        related: ['photo', 'code']
-      },
-      {
-        id: 'vps',
-        title: 'VPS Hosting',
-        category: 'technical',
-        base_price: 49000,
-        discount_price: 39000,
-        stock: 500,
-        image: 'https://readdy.ai/api/search-image?query=data%20center%20server%20racks&width=300&height=200',
-        icon: 'https://readdy.ai/api/search-image?query=icon%203D%20server%20rack&width=150&height=150',
-        rating: 4.5,
-        reviews: 180,
-        duration: 'Instant',
-        description: 'Solusi hosting Virtual Private Server.',
-        tags: ['hosting', 'server', 'infrastructure'],
-        tiers: [
-          { name: 'Basic', price: 49000, features: ['2 CPU cores', '4GB RAM', '50GB SSD', '1TB bandwidth'] },
-          { name: 'Standard', price: 99000, features: ['4 CPU cores', '8GB RAM', '100GB SSD', '2TB bandwidth'] },
-          { name: 'Premium', price: 199000, features: ['8 CPU cores', '16GB RAM', '200GB SSD', 'Unlimited bandwidth'] }
-        ],
-        related: ['wifi', 'code']
-      }
-    ];
-    setProducts(mockProducts);
+  const createProduct = async (productData: Omit<Product, 'id' | 'rating' | 'reviews'>) => {
+    try {
+      const newProduct: Product = {
+        ...productData,
+        id: `prod-${Date.now()}`,
+        rating: 0,
+        reviews: 0,
+      };
+      const updatedProducts = [...products, newProduct];
+      setProducts(updatedProducts);
+      localStorage.setItem('digital-store-products', JSON.stringify(updatedProducts));
+      return newProduct;
+    } catch (err) {
+      throw new Error('Failed to create product');
+    }
+  };
+
+  const updateProduct = async (id: string, updates: Partial<Product>) => {
+    try {
+      const updatedProducts = products.map((p) =>
+        p.id === id ? { ...p, ...updates } : p
+      );
+      setProducts(updatedProducts);
+      localStorage.setItem('digital-store-products', JSON.stringify(updatedProducts));
+      return updatedProducts.find((p) => p.id === id);
+    } catch (err) {
+      throw new Error('Failed to update product');
+    }
+  };
+
+  const deleteProduct = async (id: string) => {
+    try {
+      const updatedProducts = products.filter((p) => p.id !== id);
+      setProducts(updatedProducts);
+      localStorage.setItem('digital-store-products', JSON.stringify(updatedProducts));
+    } catch (err) {
+      throw new Error('Failed to delete product');
+    }
+  };
+
+  const getProductById = (id: string) => {
+    return products.find((p) => p.id === id);
+  };
+
+  const getProductsByCategory = (category: string) => {
+    return products.filter((p) => p.category === category);
   };
 
   useEffect(() => {
     if (products.length === 0) {
       fetchProducts();
     }
-  }, [fetchProducts, products.length]);
-
-  const getProductById = useCallback((id: string) => {
-    return products.find((p) => p.id === id);
-  }, [products]);
-
-  const getProductsByCategory = useCallback((category: string) => {
-    if (category === 'all') return products;
-    return products.filter((p) => p.category === category);
-  }, [products]);
-
-  const createProduct = async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
-    try {
-      const newProduct = await ProductService.create(product);
-      setProducts([newProduct, ...products]);
-      return newProduct;
-    } catch (err: any) {
-      throw err;
-    }
-  };
-
-  const updateProduct = async (id: string, updates: Partial<Product>) => {
-    try {
-      const updated = await ProductService.update(id, updates);
-      setProducts(products.map((p) => (p.id === id ? updated : p)));
-      return updated;
-    } catch (err: any) {
-      throw err;
-    }
-  };
-
-  const deleteProduct = async (id: string) => {
-    try {
-      await ProductService.delete(id);
-      setProducts(products.filter((p) => p.id !== id));
-    } catch (err: any) {
-      throw err;
-    }
-  };
-
-  const updateStock = async (id: string, stock: number) => {
-    try {
-      await ProductService.updateStock(id, stock);
-      setProducts(products.map((p) => (p.id === id ? { ...p, stock } : p)));
-    } catch (err: any) {
-      throw err;
-    }
-  };
-
-  const updatePrice = async (id: string, basePrice: number, discountPrice?: number) => {
-    try {
-      await ProductService.updatePrice(id, basePrice, discountPrice);
-      setProducts(products.map((p) => 
-        p.id === id ? { ...p, base_price: basePrice, discount_price: discountPrice } : p
-      ));
-    } catch (err: any) {
-      throw err;
-    }
-  };
+  }, []);
 
   return {
     products,
     isLoading,
     error,
     fetchProducts,
-    getProductById,
-    getProductsByCategory,
     createProduct,
     updateProduct,
     deleteProduct,
-    updateStock,
-    updatePrice,
+    getProductById,
+    getProductsByCategory,
   };
 };

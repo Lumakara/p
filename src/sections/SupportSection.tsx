@@ -89,7 +89,12 @@ export function SupportSection() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   
   // Ticket states
-  const [ticketForm, setTicketForm] = useState({
+  const [ticketForm, setTicketForm] = useState<{
+    subject: string;
+    category: 'technical' | 'billing' | 'general' | '';
+    email: string;
+    description: string;
+  }>({
     subject: '',
     category: '',
     email: profile?.email || '',
@@ -451,7 +456,7 @@ export function SupportSection() {
                     <Label className={isDarkMode ? 'text-white' : ''}>{t.category}</Label>
                     <Select
                       value={ticketForm.category}
-                      onValueChange={(value) => setTicketForm({...ticketForm, category: value})}
+                      onValueChange={(value) => setTicketForm({...ticketForm, category: value as 'technical' | 'billing' | 'general'})}
                     >
                       <SelectTrigger className={isDarkMode ? 'bg-gray-700 border-gray-600' : ''}>
                         <SelectValue placeholder={language === 'id' ? 'Pilih kategori' : 'Select category'} />

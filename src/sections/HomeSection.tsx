@@ -141,17 +141,17 @@ export function HomeSection() {
       const matchesSearch = searchQuery === '' || 
         product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+        product.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchesCategory && matchesSearch;
     });
 
     // Sort
     switch (sortBy) {
       case 'price_asc':
-        result.sort((a, b) => (a.discount_price || a.base_price) - (b.discount_price || b.base_price));
+        result.sort((a, b) => ((a.discount_price || a.base_price || 0) - (b.discount_price || b.base_price || 0)));
         break;
       case 'price_desc':
-        result.sort((a, b) => (b.discount_price || b.base_price) - (a.discount_price || a.base_price));
+        result.sort((a, b) => ((b.discount_price || b.base_price || 0) - (a.discount_price || a.base_price || 0)));
         break;
       case 'rating':
         result.sort((a, b) => b.rating - a.rating);
@@ -689,14 +689,14 @@ export function HomeSection() {
                 </button>
 
                 {/* Discount Badge */}
-                {selectedProduct.discount_price && (
+                {selectedProduct.discount_price && selectedProduct.base_price && (
                   <Badge className="absolute top-4 left-4 bg-red-500 text-white border-0 text-sm px-3 py-1">
                     -{Math.round(((selectedProduct.base_price - selectedProduct.discount_price) / selectedProduct.base_price) * 100)}%
                   </Badge>
                 )}
 
                 {/* Stock Badge */}
-                {selectedProduct.stock < 20 && (
+                {selectedProduct.stock !== undefined && selectedProduct.stock < 20 && (
                   <Badge className="absolute bottom-4 left-4 bg-orange-500 text-white border-0">
                     {t.limitedStock}
                   </Badge>
@@ -733,7 +733,7 @@ export function HomeSection() {
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2 mt-3">
-                  {selectedProduct.tags.map((tag) => (
+                  {selectedProduct.tags?.map((tag) => (
                     <Badge 
                       key={tag} 
                       variant="secondary" 
@@ -845,9 +845,9 @@ interface ProductCardProps {
 }
 
 function ProductCard({ product, onClick, isInCart, isFav, onFavorite, style, variant, isDarkMode, theme }: ProductCardProps) {
-  const price = product.discount_price || product.base_price;
-  const hasDiscount = product.discount_price && product.discount_price < product.base_price;
-  const discountPercent = hasDiscount 
+  const price = product.discount_price || product.base_price || 0;
+  const hasDiscount = product.discount_price && product.base_price && product.discount_price < product.base_price;
+  const discountPercent = hasDiscount && product.base_price
     ? Math.round(((product.base_price - (product.discount_price || 0)) / product.base_price) * 100)
     : 0;
 
@@ -914,9 +914,9 @@ function ProductCard({ product, onClick, isInCart, isFav, onFavorite, style, var
             </div>
             <div className="mt-2">
               <span className={`${getThemeColor()} font-bold text-sm`}>
-                Rp {price.toLocaleString('id-ID')}
+                Rp {(price || 0).toLocaleString('id-ID')}
               </span>
-              {hasDiscount && (
+              {hasDiscount && product.base_price && (
                 <span className="text-xs text-gray-400 line-through ml-1">
                   Rp {product.base_price.toLocaleString('id-ID')}
                 </span>
@@ -965,7 +965,7 @@ function ProductCard({ product, onClick, isInCart, isFav, onFavorite, style, var
             </div>
           )}
 
-          {product.stock < 20 && (
+          {product.stock !== undefined && product.stock < 20 && (
             <Badge className="absolute bottom-2 left-2 bg-orange-500 text-white text-xs">
               Stok Terbatas
             </Badge>
@@ -980,9 +980,9 @@ function ProductCard({ product, onClick, isInCart, isFav, onFavorite, style, var
           <div className="flex items-center justify-between mt-2">
             <div>
               <span className={`${getThemeColor()} font-bold text-sm`}>
-                Rp {price.toLocaleString('id-ID')}
+                Rp {(price || 0).toLocaleString('id-ID')}
               </span>
-              {hasDiscount && (
+              {hasDiscount && product.base_price && (
                 <span className={`text-xs line-through ml-1 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>
                   Rp {product.base_price.toLocaleString('id-ID')}
                 </span>

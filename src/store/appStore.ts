@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Product, Order, SupportTicket } from '@/lib/supabase';
+import type { Product, Order, SupportTicket } from '@/lib/database';
 
 export type ThemeType = 'default' | 'ocean' | 'sunset' | 'forest';
 export type LanguageType = 'id' | 'en';
@@ -88,6 +88,7 @@ interface AppState {
   addOrder: (order: Order) => void;
   getOrderById: (id: string) => Order | undefined;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
+  setOrders: (orders: Order[]) => void;
 
   // UI State
   isLoading: boolean;
@@ -118,6 +119,7 @@ interface AppState {
   // Support Tickets
   tickets: SupportTicket[];
   addTicket: (ticket: SupportTicket) => void;
+  setTickets: (tickets: SupportTicket[]) => void;
 
   // App Loading & Promo
   isAppLoading: boolean;
@@ -267,6 +269,7 @@ export const useAppStore = create<AppState>()(
           ),
         });
       },
+      setOrders: (orders) => set({ orders }),
 
       // UI State
       isLoading: false,
@@ -301,6 +304,7 @@ export const useAppStore = create<AppState>()(
       // Support Tickets
       tickets: [],
       addTicket: (ticket) => set({ tickets: [ticket, ...get().tickets] }),
+      setTickets: (tickets) => set({ tickets }),
 
       // App Loading & Promo
       isAppLoading: true,

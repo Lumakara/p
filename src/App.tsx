@@ -26,7 +26,7 @@ function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
   const filtered = products.filter(p => 
     p.title.toLowerCase().includes(query.toLowerCase()) ||
     p.description.toLowerCase().includes(query.toLowerCase()) ||
-    p.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+    p.tags?.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
   );
 
   if (!isOpen) return null;
@@ -81,7 +81,7 @@ function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
                   {product.title}
                 </p>
                 <p className="text-xs text-orange-500 font-semibold">
-                  Rp {(product.discount_price || product.base_price).toLocaleString('id-ID')}
+                  Rp {(product.discount_price || product.base_price || 0).toLocaleString('id-ID')}
                 </p>
               </div>
             </div>

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { PakasirPayment, type PaymentResponse, type PaymentMethod } from '@/lib/pakasir';
-import { OrderService } from '@/lib/supabase';
+import { PakasirPayment, type PaymentResponse } from '@/lib/pakasir';
+import type { PaymentMethod } from '@/types';
 import { TelegramBot } from '@/lib/telegram';
 import { useAppStore } from '@/store/appStore';
 import { ultraAudio } from '@/lib/audio';
+import type { Order } from '@/types';
 
 export const usePayment = () => {
-  const { profile, getSelectedItems, clearCart } = useAppStore();
+  const { profile, getSelectedItems, clearCart, addOrder } = useAppStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentData, setPaymentData] = useState<PaymentResponse | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'expired' | 'cancelled' | null>(null);
@@ -55,22 +56,30 @@ export const usePayment = () => {
       setPaymentData(response);
       setCountdown(1800); // Reset countdown
       
-      // Create order in database
+      // Create order in local database
       try {
-        const order = await OrderService.create({
-          user_id: profile?.id || 'guest',
+        const order: Order = {
+          id: orderId,
           items: selectedItems.map(item => ({
-            product_id: item.productId,
+            productId: item.productId,
             title: item.title,
             tier: item.tier,
             price: item.price,
             quantity: item.quantity,
           })),
-          total_amount: subtotal,
+          total: subtotal,
           status: 'pending',
-          payment_method: selectedMethod.toUpperCase(),
-          payment_reference: response.order_id,
-        });
+          paymentMethod: selectedMethod as PaymentMethod,
+          customerName: request.customerName,
+          customerEmail: request.customerEmail,
+          createdAt: new Date().toISOString(),
+          qrCode: response.qr_code_url,
+          qrString: response.qr_string,
+          vaNumber: response.va_number,
+          paymentUrl: response.payment_url,
+        };
+
+        addOrder(order);
 
         // Send notification to Telegram
         await TelegramBot.sendOrderNotification({
