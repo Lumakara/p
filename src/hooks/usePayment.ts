@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
-import { PakasirPayment, type PaymentResponse } from '@/lib/pakasir';
+import { PakasirPayment, type PaymentResponse, type PaymentMethod } from '@/lib/pakasir';
 import { OrderService } from '@/lib/supabase';
 import { TelegramBot } from '@/lib/telegram';
 import { useAppStore } from '@/store/appStore';
+import { ultraAudio } from '@/lib/audio';
 
 export const usePayment = () => {
-  const { user, profile, getSelectedItems } = useAppStore();
+  const { profile, getSelectedItems, clearCart } = useAppStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentData, setPaymentData] = useState<PaymentResponse | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'expired' | 'cancelled' | null>(null);
   const [countdown, setCountdown] = useState(1800); // 30 minutes in seconds
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('qris');
 
   // Countdown timer
   useEffect(() => {
@@ -30,6 +32,8 @@ export const usePayment = () => {
 
   const createPayment = async (): Promise<PaymentResponse> => {
     setIsProcessing(true);
+    ultraAudio.playPaymentProcessing();
+    
     try {
       const selectedItems = getSelectedItems();
       if (selectedItems.length === 0) {
@@ -37,23 +41,24 @@ export const usePayment = () => {
       }
 
       const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const orderId = `ORDER-${Date.now()}`;
+      const orderId = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
       const request = {
         orderId,
         amount: subtotal,
-        customerName: profile?.full_name || user?.displayName || 'Guest',
-        customerEmail: profile?.email || user?.email || '',
-        description: `Pembelian ${selectedItems.length} layanan`,
+        customerName: profile?.name || 'Guest',
+        customerEmail: profile?.email || '',
+        description: `Pembelian ${selectedItems.length} layanan di Digital Store`,
       };
 
-      const response = await PakasirPayment.createQRISPayment(request);
+      const response = await PakasirPayment.createPayment(request, selectedMethod);
       setPaymentData(response);
+      setCountdown(1800); // Reset countdown
       
       // Create order in database
       try {
         const order = await OrderService.create({
-          user_id: user?.uid || 'guest',
+          user_id: profile?.id || 'guest',
           items: selectedItems.map(item => ({
             product_id: item.productId,
             title: item.title,
@@ -63,7 +68,7 @@ export const usePayment = () => {
           })),
           total_amount: subtotal,
           status: 'pending',
-          payment_method: 'QRIS',
+          payment_method: selectedMethod.toUpperCase(),
           payment_reference: response.order_id,
         });
 
@@ -89,27 +94,36 @@ export const usePayment = () => {
       return response;
     } catch (error: any) {
       console.error('Payment creation error:', error);
+      ultraAudio.playError();
       throw error;
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const checkPaymentStatus = async (orderId: string): Promise<void> => {
-    // For Pakasir, we need to check via webhook or callback
-    // This is a simplified version - in production, you'd check via API
-    console.log('Checking payment status for:', orderId);
+  const checkPaymentStatus = async (orderId: string, amount: number): Promise<void> => {
+    try {
+      const status = await PakasirPayment.checkStatus(orderId, amount);
+      setPaymentStatus(status.status as any);
+      
+      if (status.status === 'completed') {
+        ultraAudio.playPaymentSuccess();
+        // Clear cart on successful payment
+        clearCart();
+      }
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+    }
   };
 
-  const cancelPayment = async (orderId: string): Promise<boolean> => {
+  const cancelPayment = async (orderId: string, amount: number): Promise<boolean> => {
     try {
-      const selectedItems = getSelectedItems();
-      const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const result = await PakasirPayment.cancelPayment(orderId, subtotal);
+      const result = await PakasirPayment.cancelPayment(orderId, amount);
       if (result) {
         setPaymentData(null);
         setPaymentStatus(null);
         setCountdown(1800);
+        ultraAudio.playClose();
       }
       return result;
     } catch (error: any) {
@@ -118,8 +132,40 @@ export const usePayment = () => {
     }
   };
 
+  const simulatePayment = async (orderId: string, amount: number): Promise<boolean> => {
+    try {
+      const result = await PakasirPayment.simulatePayment(orderId, amount);
+      if (result) {
+        setPaymentStatus('paid');
+        ultraAudio.playPaymentSuccess();
+        clearCart();
+      }
+      return result;
+    } catch (error) {
+      console.error('Simulation error:', error);
+      return false;
+    }
+  };
+
   const formatCountdown = (): string => {
     return PakasirPayment.formatExpiryTime(countdown);
+  };
+
+  const openPaymentPage = () => {
+    if (paymentData) {
+      const url = PakasirPayment.createPaymentURL(
+        { 
+          orderId: paymentData.order_id, 
+          amount: paymentData.amount 
+        },
+        { 
+          method: selectedMethod,
+          qrisOnly: selectedMethod === 'qris',
+          redirect: window.location.origin + '/profile'
+        }
+      );
+      window.open(url, '_blank');
+    }
   };
 
   return {
@@ -127,10 +173,15 @@ export const usePayment = () => {
     paymentData,
     paymentStatus,
     countdown,
+    selectedMethod,
+    setSelectedMethod,
     formatCountdown,
     createPayment,
     checkPaymentStatus,
     cancelPayment,
+    simulatePayment,
+    openPaymentPage,
     formatRupiah: PakasirPayment.formatRupiah,
+    getPaymentMethods: PakasirPayment.getPaymentMethods,
   };
 };

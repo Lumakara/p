@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
 import { TicketService, type SupportTicket } from '@/lib/supabase';
 import { TelegramBot } from '@/lib/telegram';
-import { EmailService } from '@/lib/emailjs';
-import { useAppStore } from '@/store/appStore';
 
 export interface TicketFormData {
   subject: string;
@@ -12,7 +10,6 @@ export interface TicketFormData {
 }
 
 export const useSupport = () => {
-  const { user } = useAppStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
 
@@ -21,7 +18,6 @@ export const useSupport = () => {
     try {
       // Create ticket in Supabase
       const ticket = await TicketService.create({
-        user_id: user?.uid,
         subject: formData.subject,
         category: formData.category,
         email: formData.email,
@@ -38,45 +34,6 @@ export const useSupport = () => {
         timestamp: new Date(ticket.created_at || '').toLocaleString('id-ID'),
       });
 
-      // Send notification email to admin
-      await EmailService.sendNotificationEmail(
-        'admin@lumakara.com',
-        'Admin',
-        '🎫 Tiket Baru: ' + ticket.subject,
-        `Tiket dukungan baru telah dibuat:
-
-📋 ID: #${ticket.id}
-📌 Subjek: ${ticket.subject}
-🏷️ Kategori: ${ticket.category}
-📧 Email Pengirim: ${ticket.email}
-🕐 Waktu: ${new Date(ticket.created_at || '').toLocaleString('id-ID')}
-
-📝 Deskripsi:
-${ticket.description}
-
-Silakan segera ditindaklanjuti.`
-      );
-
-      // Send confirmation email to user
-      await EmailService.sendNotificationEmail(
-        ticket.email,
-        'Pengguna',
-        'Tiket Dukungan Anda Telah Diterima',
-        `Halo,
-
-Terima kasih telah menghubungi kami. Tiket dukungan Anda telah berhasil dibuat.
-
-📋 ID Tiket: #${ticket.id}
-📌 Subjek: ${ticket.subject}
-🏷️ Kategori: ${ticket.category}
-🕐 Waktu: ${new Date(ticket.created_at || '').toLocaleString('id-ID')}
-
-Tim support kami akan segera meninjau dan merespons tiket Anda dalam waktu 2-4 jam.
-
-Salam,
-Tim Layanan Digital`
-      );
-
       return ticket;
     } catch (error: any) {
       console.error('Error submitting ticket:', error);
@@ -84,17 +41,7 @@ Tim Layanan Digital`
     } finally {
       setIsSubmitting(false);
     }
-  }, [user?.uid]);
-
-  const fetchUserTickets = useCallback(async () => {
-    if (!user?.uid) return;
-    try {
-      const userTickets = await TicketService.getByUser(user.uid);
-      setTickets(userTickets);
-    } catch (error) {
-      console.error('Error fetching tickets:', error);
-    }
-  }, [user?.uid]);
+  }, []);
 
   const fetchAllTickets = useCallback(async () => {
     try {
@@ -109,7 +56,6 @@ Tim Layanan Digital`
     tickets,
     isSubmitting,
     submitTicket,
-    fetchUserTickets,
     fetchAllTickets,
   };
 };

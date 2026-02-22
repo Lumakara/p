@@ -1,47 +1,59 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Sidebar } from '@/components/Sidebar';
 import { HomeSection } from '@/sections/HomeSection';
 import { CartSection } from '@/sections/CartSection';
-import { AuthSection } from '@/sections/AuthSection';
+import { CheckoutSection } from '@/sections/CheckoutSection';
 import { SupportSection } from '@/sections/SupportSection';
 import { ProfileSection } from '@/sections/ProfileSection';
-import { CheckoutSection } from '@/sections/CheckoutSection';
-import { WelcomeModal } from '@/components/WelcomeModal';
-import { TutorialModal } from '@/components/TutorialModal';
+import { WelcomeScreen } from '@/components/WelcomeScreen';
+import { PromoModal } from '@/components/PromoModal';
+import { ReviewsPage } from '@/pages/ReviewsPage';
 import { useAppStore } from '@/store/appStore';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
-import { audioService } from '@/lib/audio';
+import { ultraAudio } from '@/lib/audio';
 import './App.css';
 
 // Search Modal Component
 function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [query, setQuery] = useState('');
-  const { products, addToCart, isDarkMode, soundEnabled } = useAppStore();
+  const { products, isDarkMode, language } = useAppStore();
+  const navigate = useNavigate();
 
   const filtered = products.filter(p => 
     p.title.toLowerCase().includes(query.toLowerCase()) ||
-    p.description.toLowerCase().includes(query.toLowerCase())
+    p.description.toLowerCase().includes(query.toLowerCase()) ||
+    p.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
   );
 
   if (!isOpen) return null;
 
+  const t = {
+    search: language === 'id' ? 'Cari produk...' : 'Search products...',
+    noResults: language === 'id' ? 'Tidak ada hasil' : 'No results',
+  };
+
   return (
-    <div className={`fixed inset-0 z-50 ${isDarkMode ? 'bg-black/70' : 'bg-black/50'}`} onClick={onClose}>
+    <div 
+      className={`fixed inset-0 z-50 ${isDarkMode ? 'bg-black/80' : 'bg-black/60'} backdrop-blur-md`}
+      onClick={onClose}
+    >
       <div 
-        className={`absolute top-16 left-4 right-4 rounded-xl shadow-2xl p-4 max-h-[70vh] overflow-auto ${
-          isDarkMode ? 'bg-gray-800' : 'bg-white'
+        className={`absolute top-20 left-4 right-4 rounded-2xl shadow-2xl p-4 max-h-[70vh] overflow-auto ${
+          isDarkMode ? 'bg-gray-900 border border-gray-800' : 'bg-white'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         <input
           type="text"
-          placeholder="Cari layanan..."
-          className={`w-full p-3 border rounded-lg mb-4 ${
-            isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''
+          placeholder={t.search}
+          className={`w-full p-4 border rounded-xl mb-4 text-base ${
+            isDarkMode 
+              ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' 
+              : 'bg-gray-50 border-gray-200'
           }`}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -51,26 +63,32 @@ function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
           {query && filtered.map(product => (
             <div 
               key={product.id} 
-              className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer ${
-                isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+              className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all active:scale-95 ${
+                isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
               }`}
               onClick={() => {
-                addToCart(product, product.tiers[0]?.name || '');
-                if (soundEnabled) audioService.playSuccess();
-                toast.success(`${product.title} ditambahkan ke keranjang`);
                 onClose();
+                navigate(`/?product=${product.id}`);
               }}
             >
-              <img src={product.icon} alt={product.title} className="w-12 h-12 object-cover rounded" />
+              <img 
+                src={product.icon} 
+                alt={product.title} 
+                className="w-14 h-14 object-cover rounded-lg" 
+              />
               <div className="flex-1">
-                <p className={`font-medium text-sm ${isDarkMode ? 'text-white' : ''}`}>{product.title}</p>
-                <p className="text-xs text-blue-500">Rp {product.base_price.toLocaleString('id-ID')}</p>
+                <p className={`font-medium text-sm ${isDarkMode ? 'text-white' : ''}`}>
+                  {product.title}
+                </p>
+                <p className="text-xs text-orange-500 font-semibold">
+                  Rp {(product.discount_price || product.base_price).toLocaleString('id-ID')}
+                </p>
               </div>
             </div>
           ))}
           {query && filtered.length === 0 && (
-            <p className={`text-center py-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              Tidak ada hasil
+            <p className={`text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              {t.noResults}
             </p>
           )}
         </div>
@@ -79,31 +97,52 @@ function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
   );
 }
 
-// Theme Provider Component
+// Theme Provider
 function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { isDarkMode } = useAppStore();
+  const { isDarkMode, theme } = useAppStore();
   
   useEffect(() => {
     const root = document.documentElement;
+    
+    // Handle dark mode
     if (isDarkMode) {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-  }, [isDarkMode]);
+
+    // Handle theme colors
+    const themeColors: Record<string, { primary: string; secondary: string }> = {
+      default: { primary: '#f97316', secondary: '#ef4444' },
+      ocean: { primary: '#0ea5e9', secondary: '#06b6d4' },
+      sunset: { primary: '#f97316', secondary: '#ec4899' },
+      forest: { primary: '#10b981', secondary: '#84cc16' },
+    };
+
+    const colors = themeColors[theme] || themeColors.default;
+    root.style.setProperty('--primary', colors.primary);
+    root.style.setProperty('--secondary', colors.secondary);
+
+  }, [isDarkMode, theme]);
 
   return <>{children}</>;
 }
 
 // Main App Component
 function App() {
-  const { notification, setNotification, isDarkMode, soundEnabled, hasSeenTutorial, setHasSeenTutorial } = useAppStore();
+  const { 
+    notification, 
+    setNotification, 
+    isDarkMode, 
+    isAppLoading,
+    musicEnabled,
+  } = useAppStore();
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [showTutorial, setShowTutorial] = useState(false);
   const location = useLocation();
 
-  // Show notifications
+  // Handle notifications
   useEffect(() => {
     if (notification) {
       toast[notification.type](notification.message);
@@ -116,6 +155,7 @@ function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
+        ultraAudio.playClick();
         setSearchOpen(true);
       }
       if (e.key === 'Escape') {
@@ -128,47 +168,51 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Initialize audio service
+  // Initialize audio and music
   useEffect(() => {
-    audioService.initialize();
-  }, []);
-
-  // Show tutorial if not seen
-  useEffect(() => {
-    if (!hasSeenTutorial && location.pathname === '/') {
-      const timer = setTimeout(() => {
-        setShowTutorial(true);
-      }, 3000);
-      return () => clearTimeout(timer);
+    ultraAudio.initialize();
+    
+    if (musicEnabled && !isAppLoading) {
+      ultraAudio.playBackgroundMusic();
+    } else {
+      ultraAudio.pauseBackgroundMusic();
     }
-  }, [hasSeenTutorial, location.pathname]);
 
-  const handleTutorialClose = () => {
-    setShowTutorial(false);
-    setHasSeenTutorial(true);
-  };
+    return () => {
+      ultraAudio.stopBackgroundMusic();
+    };
+  }, [musicEnabled, isAppLoading]);
 
   // Don't show header/bottom nav on checkout
   const isCheckout = location.pathname === '/checkout';
+  const isReviews = location.pathname.startsWith('/reviews');
+
+  // Show loading screen
+  if (isAppLoading) {
+    return (
+      <ThemeProvider>
+        <WelcomeScreen />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider>
-      <div className={`min-h-screen transition-colors ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        {/* Welcome Modal */}
-        <WelcomeModal />
-
-        {/* Tutorial Modal */}
-        <TutorialModal isOpen={showTutorial} onClose={handleTutorialClose} />
+      <div className={`min-h-screen transition-colors duration-300 ${
+        isDarkMode ? 'bg-gray-950' : 'bg-gray-50'
+      }`}>
+        {/* Promo Modal */}
+        <PromoModal />
 
         {/* Header */}
-        {!isCheckout && (
+        {!isCheckout && !isReviews && (
           <Header 
             onMenuClick={() => {
-              if (soundEnabled) audioService.playClick();
+              ultraAudio.playClick();
               setSidebarOpen(true);
             }} 
             onSearchClick={() => {
-              if (soundEnabled) audioService.playClick();
+              ultraAudio.playClick();
               setSearchOpen(true);
             }}
           />
@@ -181,22 +225,25 @@ function App() {
         />
 
         {/* Search Modal */}
-        <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+        <SearchModal 
+          isOpen={searchOpen} 
+          onClose={() => setSearchOpen(false)} 
+        />
 
         {/* Main Content */}
-        <main className={`min-h-screen ${!isCheckout ? 'pt-14 pb-16' : ''}`}>
+        <main className={`min-h-screen ${!isCheckout && !isReviews ? 'pt-16 pb-20' : ''}`}>
           <Routes>
             <Route path="/" element={<HomeSection />} />
             <Route path="/cart" element={<CartSection />} />
-            <Route path="/auth" element={<AuthSection />} />
+            <Route path="/checkout" element={<CheckoutSection />} />
             <Route path="/support" element={<SupportSection />} />
             <Route path="/profile" element={<ProfileSection />} />
-            <Route path="/checkout" element={<CheckoutSection />} />
+            <Route path="/reviews/:productId" element={<ReviewsPage />} />
           </Routes>
         </main>
 
         {/* Bottom Navigation */}
-        {!isCheckout && <BottomNav />}
+        {!isCheckout && !isReviews && <BottomNav />}
 
         {/* Toast notifications */}
         <Toaster 
@@ -205,6 +252,7 @@ function App() {
             style: {
               background: isDarkMode ? '#1f2937' : '#fff',
               color: isDarkMode ? '#fff' : '#000',
+              border: isDarkMode ? '1px solid #374151' : 'none',
             },
           }}
         />

@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Product, UserProfile, Order } from '@/lib/supabase';
-import type { AuthUser } from '@/lib/firebase';
+import type { Product, Order, SupportTicket } from '@/lib/supabase';
+
+export type ThemeType = 'default' | 'ocean' | 'sunset' | 'forest';
+export type LanguageType = 'id' | 'en';
 
 export interface CartItem {
   id: string;
@@ -17,34 +19,57 @@ export interface CartItem {
 export interface Review {
   id: string;
   productId: string;
-  userId: string;
   userName: string;
   userAvatar?: string;
   rating: number;
   comment: string;
   createdAt: string;
+  likes?: number;
 }
 
-export type ThemeType = 'default' | 'ocean' | 'sunset' | 'forest' | 'dark';
+export interface UserProfile {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  avatar?: string;
+  createdAt: string;
+}
+
+export interface PromoSlide {
+  id: string;
+  image?: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  color: string;
+  bgColor: string;
+}
+
+export interface SiteNews {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+  type: 'update' | 'promo' | 'info';
+}
 
 interface AppState {
-  // Auth
-  user: AuthUser | null;
-  profile: UserProfile | null;
-  isAuthenticated: boolean;
-  setUser: (user: AuthUser | null) => void;
-  setProfile: (profile: UserProfile | null) => void;
-  logout: () => void;
-
   // Products
   products: Product[];
   setProducts: (products: Product[]) => void;
   getProductById: (id: string) => Product | undefined;
 
+  // Favorites
+  favorites: string[];
+  toggleFavorite: (productId: string) => void;
+  isFavorite: (productId: string) => boolean;
+
   // Reviews
   reviews: Review[];
   addReview: (review: Review) => void;
   getProductReviews: (productId: string) => Review[];
+  likeReview: (reviewId: string) => void;
 
   // Cart
   cart: CartItem[];
@@ -54,17 +79,17 @@ interface AppState {
   toggleItemSelection: (index: number) => void;
   selectAllItems: (selected: boolean) => void;
   clearCart: () => void;
+  clearSelectedItems: () => void;
   getCartTotal: () => { subtotal: number; count: number };
   getSelectedItems: () => CartItem[];
 
   // Orders
   orders: Order[];
-  setOrders: (orders: Order[]) => void;
   addOrder: (order: Order) => void;
+  getOrderById: (id: string) => Order | undefined;
+  updateOrderStatus: (orderId: string, status: Order['status']) => void;
 
   // UI State
-  currentSection: string;
-  setCurrentSection: (section: string) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
   notification: { message: string; type: 'success' | 'error' | 'info' } | null;
@@ -86,35 +111,82 @@ interface AppState {
   toggleSound: () => void;
   toggleMusic: () => void;
 
-  // Welcome Modal
-  hasSeenWelcome: boolean;
-  setHasSeenWelcome: (seen: boolean) => void;
+  // Language
+  language: LanguageType;
+  setLanguage: (lang: LanguageType) => void;
 
-  // Tutorial
-  hasSeenTutorial: boolean;
-  setHasSeenTutorial: (seen: boolean) => void;
+  // Support Tickets
+  tickets: SupportTicket[];
+  addTicket: (ticket: SupportTicket) => void;
+
+  // App Loading & Promo
+  isAppLoading: boolean;
+  setIsAppLoading: (loading: boolean) => void;
+  hasSeenPromo: boolean;
+  setHasSeenPromo: (seen: boolean) => void;
+
+  // Site News
+  news: SiteNews[];
+  addNews: (news: SiteNews) => void;
+
+  // User Profile (Local - No Auth)
+  profile: UserProfile;
+  updateProfile: (updates: Partial<UserProfile>) => void;
 }
+
+const generateId = () => Math.random().toString(36).substring(2, 15);
+
+const defaultNews: SiteNews[] = [
+  {
+    id: '1',
+    title: 'Selamat Datang di Digital Store',
+    content: 'Terima kasih telah mengunjungi toko kami. Nikmati layanan digital terbaik dengan harga terjangkau.',
+    date: new Date().toISOString(),
+    type: 'info'
+  },
+  {
+    id: '2',
+    title: 'Promo Spesial 20%',
+    content: 'Dapatkan diskon 20% untuk pembelian pertama Anda. Gunakan kode promo: FIRST20',
+    date: new Date().toISOString(),
+    type: 'promo'
+  }
+];
 
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
-      // Auth
-      user: null,
-      profile: null,
-      isAuthenticated: false,
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
-      setProfile: (profile) => set({ profile }),
-      logout: () => set({ user: null, profile: null, isAuthenticated: false }),
-
       // Products
       products: [],
       setProducts: (products) => set({ products }),
       getProductById: (id) => get().products.find((p) => p.id === id),
 
+      // Favorites
+      favorites: [],
+      toggleFavorite: (productId) => {
+        const { favorites } = get();
+        const isFav = favorites.includes(productId);
+        set({
+          favorites: isFav
+            ? favorites.filter((id) => id !== productId)
+            : [...favorites, productId],
+        });
+      },
+      isFavorite: (productId) => get().favorites.includes(productId),
+
       // Reviews
       reviews: [],
       addReview: (review) => set({ reviews: [review, ...get().reviews] }),
-      getProductReviews: (productId) => get().reviews.filter((r) => r.productId === productId),
+      getProductReviews: (productId) =>
+        get().reviews.filter((r) => r.productId === productId),
+      likeReview: (reviewId) => {
+        const { reviews } = get();
+        set({
+          reviews: reviews.map((r) =>
+            r.id === reviewId ? { ...r, likes: (r.likes || 0) + 1 } : r
+          ),
+        });
+      },
 
       // Cart
       cart: [],
@@ -131,7 +203,7 @@ export const useAppStore = create<AppState>()(
           set({ cart: newCart });
         } else {
           const newItem: CartItem = {
-            id: `${product.id}-${tier.name}`,
+            id: `${product.id}-${tier.name}-${Date.now()}`,
             productId: product.id,
             title: product.title,
             tier: tier.name,
@@ -167,6 +239,10 @@ export const useAppStore = create<AppState>()(
         set({ cart: cart.map((item) => ({ ...item, selected })) });
       },
       clearCart: () => set({ cart: [] }),
+      clearSelectedItems: () => {
+        const { cart } = get();
+        set({ cart: cart.filter((item) => !item.selected) });
+      },
       getCartTotal: () => {
         const { cart } = get();
         const selected = cart.filter((item) => item.selected);
@@ -181,12 +257,18 @@ export const useAppStore = create<AppState>()(
 
       // Orders
       orders: [],
-      setOrders: (orders) => set({ orders }),
       addOrder: (order) => set({ orders: [order, ...get().orders] }),
+      getOrderById: (id) => get().orders.find((o) => o.id === id),
+      updateOrderStatus: (orderId, status) => {
+        const { orders } = get();
+        set({
+          orders: orders.map((o) =>
+            o.id === orderId ? { ...o, status } : o
+          ),
+        });
+      },
 
       // UI State
-      currentSection: 'home',
-      setCurrentSection: (section) => set({ currentSection: section }),
       isLoading: false,
       setIsLoading: (loading) => set({ isLoading: loading }),
       notification: null,
@@ -197,7 +279,7 @@ export const useAppStore = create<AppState>()(
       addRecentlyViewed: (productId) => {
         const { recentlyViewed } = get();
         const filtered = recentlyViewed.filter((id) => id !== productId);
-        set({ recentlyViewed: [productId, ...filtered].slice(0, 10) });
+        set({ recentlyViewed: [productId, ...filtered].slice(0, 20) });
       },
 
       // Theme Settings
@@ -212,26 +294,51 @@ export const useAppStore = create<AppState>()(
       toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
       toggleMusic: () => set((state) => ({ musicEnabled: !state.musicEnabled })),
 
-      // Welcome Modal
-      hasSeenWelcome: false,
-      setHasSeenWelcome: (seen) => set({ hasSeenWelcome: seen }),
+      // Language
+      language: 'id',
+      setLanguage: (lang) => set({ language: lang }),
 
-      // Tutorial
-      hasSeenTutorial: false,
-      setHasSeenTutorial: (seen) => set({ hasSeenTutorial: seen }),
+      // Support Tickets
+      tickets: [],
+      addTicket: (ticket) => set({ tickets: [ticket, ...get().tickets] }),
+
+      // App Loading & Promo
+      isAppLoading: true,
+      setIsAppLoading: (loading) => set({ isAppLoading: loading }),
+      hasSeenPromo: false,
+      setHasSeenPromo: (seen) => set({ hasSeenPromo: seen }),
+
+      // Site News
+      news: defaultNews,
+      addNews: (news) => set({ news: [news, ...get().news] }),
+
+      // User Profile (Local - No Auth)
+      profile: {
+        id: generateId(),
+        name: 'Guest User',
+        createdAt: new Date().toISOString(),
+      },
+      updateProfile: (updates) => {
+        const { profile } = get();
+        set({ profile: { ...profile, ...updates } });
+      },
     }),
     {
-      name: 'layanan-digital-storage',
+      name: 'digital-store-v3',
       partialize: (state) => ({
         cart: state.cart,
+        favorites: state.favorites,
         recentlyViewed: state.recentlyViewed,
         orders: state.orders,
         theme: state.theme,
         isDarkMode: state.isDarkMode,
         soundEnabled: state.soundEnabled,
         musicEnabled: state.musicEnabled,
-        hasSeenWelcome: state.hasSeenWelcome,
-        hasSeenTutorial: state.hasSeenTutorial,
+        language: state.language,
+        hasSeenPromo: state.hasSeenPromo,
+        profile: state.profile,
+        tickets: state.tickets,
+        reviews: state.reviews,
       }),
     }
   )

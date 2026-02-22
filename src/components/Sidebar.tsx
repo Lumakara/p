@@ -1,212 +1,151 @@
-import { X, Home, ShoppingBag, User, Headphones, LogOut, Shield, Moon, Sun, Volume2, VolumeX, Music } from 'lucide-react';
+import { X, Home, ShoppingBag, User, Heart, Headphones, ShoppingCart, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Switch } from '@/components/ui/switch';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAppStore } from '@/store/appStore';
-import { useAuth } from '@/hooks/useAuth';
-import { Link, useNavigate } from 'react-router-dom';
-import { audioService } from '@/lib/audio';
+import { useNavigate } from 'react-router-dom';
+import { ultraAudio } from '@/lib/audio';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const themes = [
-  { id: 'default', name: 'Default', gradient: 'from-blue-600 to-orange-500' },
-  { id: 'ocean', name: 'Ocean', gradient: 'from-blue-500 to-cyan-400' },
-  { id: 'sunset', name: 'Sunset', gradient: 'from-orange-500 to-pink-500' },
-  { id: 'forest', name: 'Forest', gradient: 'from-green-500 to-emerald-400' },
-];
-
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const { 
-    user, 
-    profile, 
-    isAuthenticated, 
-    isDarkMode, 
-    toggleDarkMode, 
-    soundEnabled, 
-    toggleSound,
-    musicEnabled,
-    toggleMusic,
-    theme,
-    setTheme,
-  } = useAppStore();
-  
-  const { signOut } = useAuth();
+  const { cart, favorites, isDarkMode, language } = useAppStore();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    if (soundEnabled) audioService.playClick();
-    await signOut();
-    onClose();
-    navigate('/');
-  };
+  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleNavClick = () => {
-    if (soundEnabled) audioService.playClick();
+  const handleNavClick = (path: string) => {
+    ultraAudio.playClick();
+    ultraAudio.haptic('light');
     onClose();
+    navigate(path);
   };
 
   const navItems = [
-    { id: 'home', label: 'Beranda', icon: Home, path: '/' },
-    { id: 'cart', label: 'Keranjang', icon: ShoppingBag, path: '/cart' },
-    { id: 'support', label: 'Bantuan', icon: Headphones, path: '/support' },
-    { id: 'profile', label: 'Profil Saya', icon: User, path: '/profile' },
+    { id: 'home', label: language === 'id' ? 'Beranda' : 'Home', labelEn: 'Home', icon: Home, path: '/', badge: null },
+    { id: 'cart', label: language === 'id' ? 'Keranjang' : 'Cart', labelEn: 'Cart', icon: ShoppingCart, path: '/cart', badge: cartCount },
+    { id: 'favorites', label: language === 'id' ? 'Favorit' : 'Favorites', labelEn: 'Favorites', icon: Heart, path: '/favorites', badge: favorites.length },
+    { id: 'profile', label: language === 'id' ? 'Profil' : 'Profile', labelEn: 'Profile', icon: User, path: '/profile', badge: null },
+    { id: 'support', label: language === 'id' ? 'Bantuan' : 'Support', labelEn: 'Support', icon: Headphones, path: '/support', badge: null },
   ];
 
-  const bgClass = isDarkMode ? 'bg-gray-900' : 'bg-white';
-  const textClass = isDarkMode ? 'text-white' : 'text-gray-900';
+  const bgClass = isDarkMode ? 'bg-gray-950' : 'bg-white';
   const subTextClass = isDarkMode ? 'text-gray-400' : 'text-gray-500';
-  const borderClass = isDarkMode ? 'border-gray-700' : 'border-gray-200';
+  const borderClass = isDarkMode ? 'border-gray-800' : 'border-gray-200';
   const hoverClass = isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100';
 
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay with blur */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-50"
-          onClick={onClose}
+          className="fixed inset-0 bg-black/50 backdrop-blur-md z-50 transition-opacity"
+          onClick={() => {
+            ultraAudio.playClick();
+            onClose();
+          }}
         />
       )}
 
       {/* Sidebar */}
       <div 
-        className={`fixed top-0 left-0 h-full w-80 ${bgClass} z-50 shadow-xl transform transition-transform duration-300 ease-out ${
+        className={`fixed top-0 left-0 h-full w-80 ${bgClass} z-50 shadow-2xl transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Header */}
-        <div className={`flex items-center justify-between p-4 border-b ${borderClass}`}>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">L</span>
-            </div>
-            <span className={`font-semibold text-lg ${textClass}`}>Layanan Digital</span>
+        {/* Header with gradient */}
+        <div className={`relative overflow-hidden ${
+          isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-r from-orange-500 to-red-500'
+        }`}>
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-1/2 -translate-x-1/2" />
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className={isDarkMode ? 'text-white' : ''}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+          
+          <div className="relative p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                  <ShoppingBag className="w-6 h-6 text-orange-500" />
+                </div>
+                <span className="font-bold text-lg text-white">
+                  Digital Store
+                </span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => {
+                  ultraAudio.playClick();
+                  onClose();
+                }}
+                className="text-white hover:bg-white/20"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
 
-        {/* User Info */}
-        {isAuthenticated && (
-          <div className={`p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gradient-to-r from-blue-50 to-orange-50'}`}>
+            {/* User Profile */}
             <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12 border-2 border-white shadow">
-                <AvatarImage src={profile?.avatar_url || user?.photoURL || ''} />
-                <AvatarFallback className="bg-blue-600 text-white">
-                  {(profile?.full_name || user?.displayName || 'U').charAt(0).toUpperCase()}
+              <Avatar className="h-14 w-14 border-2 border-white shadow-lg">
+                <AvatarFallback className={`${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-orange-500'} text-lg font-bold`}>
+                  <Sparkles className="w-6 h-6" />
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className={`font-semibold truncate ${textClass}`}>{profile?.full_name || user?.displayName}</p>
-                <p className={`text-sm truncate ${subTextClass}`}>{profile?.email || user?.email}</p>
+                <p className="font-semibold text-white truncate">
+                  {language === 'id' ? 'Selamat Datang!' : 'Welcome!'}
+                </p>
+                <p className="text-sm text-white/80 truncate">
+                  {language === 'id' ? 'Nikmati belanja Anda' : 'Enjoy your shopping'}
+                </p>
               </div>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Navigation */}
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
-              <Link
+              <button
                 key={item.id}
-                to={item.path}
-                onClick={handleNavClick}
-                className={`flex items-center gap-3 w-full p-3 rounded-lg ${hoverClass} transition-colors text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
+                onClick={() => handleNavClick(item.path)}
+                className={`flex items-center gap-4 w-full p-4 rounded-xl ${hoverClass} transition-all duration-200 text-left group active:scale-95 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}
               >
-                <Icon className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                <span>{item.label}</span>
-              </Link>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                  isDarkMode ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-orange-50 group-hover:bg-orange-100'
+                }`}>
+                  <Icon className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-orange-500'}`} />
+                </div>
+                <span className="flex-1 font-medium">
+                  {language === 'id' ? item.label : item.labelEn}
+                </span>
+                {item.badge !== null && item.badge > 0 && (
+                  <span className="px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[24px] text-center">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
             );
           })}
-          
-          {/* Admin Link */}
-          <a
-            href="/admin"
-            onClick={handleNavClick}
-            className={`flex items-center gap-3 w-full p-3 rounded-lg ${hoverClass} transition-colors text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
-          >
-            <Shield className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-            <span>Admin Dashboard</span>
-          </a>
         </nav>
-
-        {/* Settings Section */}
-        <div className={`p-4 border-t ${borderClass}`}>
-          <p className={`text-xs font-medium uppercase tracking-wider mb-3 ${subTextClass}`}>Pengaturan</p>
-          
-          {/* Dark Mode Toggle */}
-          <div className="flex items-center justify-between py-2">
-            <div className="flex items-center gap-3">
-              {isDarkMode ? <Moon className="h-5 w-5 text-gray-400" /> : <Sun className="h-5 w-5 text-gray-500" />}
-              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Mode Gelap</span>
-            </div>
-            <Switch checked={isDarkMode} onCheckedChange={toggleDarkMode} />
-          </div>
-
-          {/* Sound Toggle */}
-          <div className="flex items-center justify-between py-2">
-            <div className="flex items-center gap-3">
-              {soundEnabled ? <Volume2 className="h-5 w-5 text-gray-400" /> : <VolumeX className="h-5 w-5 text-gray-500" />}
-              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Efek Suara</span>
-            </div>
-            <Switch checked={soundEnabled} onCheckedChange={toggleSound} />
-          </div>
-
-          {/* Music Toggle */}
-          <div className="flex items-center justify-between py-2">
-            <div className="flex items-center gap-3">
-              <Music className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Musik Latar</span>
-            </div>
-            <Switch checked={musicEnabled} onCheckedChange={toggleMusic} />
-          </div>
-        </div>
-
-        {/* Theme Selector */}
-        <div className={`px-4 pb-4 border-t ${borderClass} pt-4`}>
-          <p className={`text-xs font-medium uppercase tracking-wider mb-3 ${subTextClass}`}>Tema Warna</p>
-          <div className="flex gap-2">
-            {themes.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  setTheme(t.id as any);
-                  if (soundEnabled) audioService.playClick();
-                }}
-                className={`w-8 h-8 rounded-full bg-gradient-to-r ${t.gradient} ${
-                  theme === t.id ? 'ring-2 ring-offset-2 ring-blue-500' : ''
-                }`}
-                title={t.name}
-              />
-            ))}
-          </div>
-        </div>
 
         {/* Footer */}
         <div className={`absolute bottom-0 left-0 right-0 p-4 border-t ${borderClass} ${bgClass}`}>
-          {isAuthenticated ? (
-            <Button 
-              variant="outline" 
-              className="w-full flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-4 w-4" />
-              Keluar
-            </Button>
-          ) : (
-            <Link to="/auth" onClick={handleNavClick}>
-              <Button className="w-full bg-gradient-to-r from-blue-600 to-orange-500">
-                Masuk / Daftar
-              </Button>
-            </Link>
-          )}
+          <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-800' : 'bg-orange-50'}`}>
+            <p className={`text-xs ${subTextClass} text-center`}>
+              © 2025 Digital Store v2.0
+            </p>
+            <p className={`text-[10px] ${subTextClass} text-center mt-1`}>
+              {language === 'id' ? 'Dibuat dengan' : 'Made with'} ❤️ {language === 'id' ? 'di Indonesia' : 'in Indonesia'}
+            </p>
+          </div>
         </div>
       </div>
     </>

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Star, Send, User, MessageCircle } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
-import { audioService } from '@/lib/audio';
+import { ultraAudio } from '@/lib/audio';
 
 interface ProductReviewsProps {
   productId: string;
@@ -13,23 +13,17 @@ interface ProductReviewsProps {
 }
 
 export function ProductReviews({ productId, isOpen, onClose }: ProductReviewsProps) {
-  const { addReview, getProductReviews, user, isAuthenticated } = useAppStore();
+  const { addReview, getProductReviews } = useAppStore();
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
   const [hoverRating, setHoverRating] = useState(0);
-  const { soundEnabled } = useAppStore();
+
 
   const productReviews = getProductReviews(productId);
 
   const handleSubmitReview = () => {
-    if (!isAuthenticated) {
-      if (soundEnabled) audioService.playError();
-      alert('Silakan login terlebih dahulu untuk memberikan ulasan');
-      return;
-    }
-
     if (newComment.trim().length < 10) {
-      if (soundEnabled) audioService.playError();
+      ultraAudio.playError();
       alert('Ulasan minimal 10 karakter');
       return;
     }
@@ -37,16 +31,16 @@ export function ProductReviews({ productId, isOpen, onClose }: ProductReviewsPro
     const review = {
       id: `review-${Date.now()}`,
       productId,
-      userId: user?.uid || 'guest',
-      userName: user?.displayName || 'Pengguna',
-      userAvatar: user?.photoURL || undefined,
+      userId: 'guest',
+      userName: 'Pengguna',
+      userAvatar: undefined,
       rating: newRating,
       comment: newComment,
       createdAt: new Date().toISOString(),
     };
 
     addReview(review);
-    if (soundEnabled) audioService.playSuccess();
+    ultraAudio.playSuccess();
     setNewComment('');
     setNewRating(5);
   };
@@ -111,7 +105,7 @@ export function ProductReviews({ productId, isOpen, onClose }: ProductReviewsPro
         </div>
 
         {/* Add Review */}
-        {isAuthenticated && (
+        {(
           <div className="border-t pt-4 mb-4">
             <p className="font-medium mb-2">Tulis Ulasan</p>
             <div className="flex gap-1 mb-2">
