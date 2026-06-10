@@ -15,6 +15,7 @@ import { useSupport } from '@/hooks/useSupport';
 import { useAppStore } from '@/store/appStore';
 import { ultraAudio } from '@/lib/audio';
 import axios from 'axios';
+import type { TicketCategory } from '@/types';
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
 
@@ -91,7 +92,7 @@ export function SupportSection() {
   // Ticket states
   const [ticketForm, setTicketForm] = useState<{
     subject: string;
-    category: 'technical' | 'billing' | 'general' | '';
+    category: TicketCategory | '';
     email: string;
     description: string;
   }>({
@@ -208,7 +209,7 @@ export function SupportSection() {
           timestamp: new Date()
         }));
       }
-    } catch (error) {
+    } catch {
       // Remove typing indicator
       setChatMessages(prev => prev.filter(m => m.id !== typingId));
       
@@ -246,7 +247,7 @@ export function SupportSection() {
         setTicketForm({ subject: '', category: '', email: '', description: '' });
         setActiveTab('chat');
       }, 3000);
-    } catch (error) {
+    } catch {
       ultraAudio.playError();
     }
   };
@@ -456,7 +457,7 @@ export function SupportSection() {
                     <Label className={isDarkMode ? 'text-white' : ''}>{t.category}</Label>
                     <Select
                       value={ticketForm.category}
-                      onValueChange={(value) => setTicketForm({...ticketForm, category: value as 'technical' | 'billing' | 'general'})}
+                      onValueChange={(value) => setTicketForm({...ticketForm, category: value as TicketCategory})}
                     >
                       <SelectTrigger className={isDarkMode ? 'bg-gray-700 border-gray-600' : ''}>
                         <SelectValue placeholder={language === 'id' ? 'Pilih kategori' : 'Select category'} />

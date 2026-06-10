@@ -1,9 +1,13 @@
 import emailjs from '@emailjs/browser';
 
 // EmailJS Configuration
-const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_5cy0pte';
-const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_nf642dj';
-const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'Y50IKgvUerHPeqTwt';
+// Provide credentials via environment variables. These are publishable client keys,
+// but keep them out of source so they can be rotated/configured per deployment.
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '';
+
+const isEmailConfigured = Boolean(EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY);
 
 export interface RegistrationEmailData {
   to_email: string;
@@ -24,11 +28,14 @@ export interface OrderEmailData {
 export const EmailService = {
   // Initialize EmailJS
   init() {
-    emailjs.init(EMAILJS_PUBLIC_KEY);
+    if (isEmailConfigured) {
+      emailjs.init(EMAILJS_PUBLIC_KEY);
+    }
   },
 
   // Send registration confirmation email
   async sendRegistrationEmail(data: RegistrationEmailData): Promise<void> {
+    if (!isEmailConfigured) return;
     try {
       const templateParams = {
         to_email: data.to_email,
@@ -45,7 +52,7 @@ export const EmailService = {
         templateParams
       );
       console.log('Registration email sent successfully');
-    } catch (error: any) {
+    } catch (error) {
       console.error('EmailJS Error:', error);
       // Don't throw error, just log it - email is not critical
     }
@@ -53,6 +60,7 @@ export const EmailService = {
 
   // Send order confirmation email
   async sendOrderConfirmationEmail(data: OrderEmailData): Promise<void> {
+    if (!isEmailConfigured) return;
     try {
       const templateParams = {
         to_email: data.to_email,
@@ -71,7 +79,7 @@ export const EmailService = {
         templateParams
       );
       console.log('Order confirmation email sent successfully');
-    } catch (error: any) {
+    } catch (error) {
       console.error('EmailJS Error:', error);
       // Don't throw error, just log it
     }
@@ -79,6 +87,7 @@ export const EmailService = {
 
   // Send generic notification email
   async sendNotificationEmail(toEmail: string, toName: string, subject: string, message: string): Promise<void> {
+    if (!isEmailConfigured) return;
     try {
       const templateParams = {
         to_email: toEmail,
@@ -93,7 +102,7 @@ export const EmailService = {
         templateParams
       );
       console.log('Notification email sent successfully');
-    } catch (error: any) {
+    } catch (error) {
       console.error('EmailJS Error:', error);
     }
   }

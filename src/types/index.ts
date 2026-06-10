@@ -81,7 +81,7 @@ export interface Order {
   notes?: string;
 }
 
-export type TicketCategory = 'technical' | 'billing' | 'general';
+export type TicketCategory = 'technical' | 'billing' | 'general' | 'installation' | 'order' | 'other';
 export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 
 export interface SupportTicket {

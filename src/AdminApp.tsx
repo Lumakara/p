@@ -39,24 +39,17 @@ const ADMIN_PASSWORD = 'admin123';
 
 
 function AdminApp() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    () => typeof window !== 'undefined' && localStorage.getItem('admin_session') === 'true'
+  );
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-
-  // Check if already logged in
-  useEffect(() => {
-    const adminSession = localStorage.getItem('admin_session');
-    if (adminSession === 'true') {
-      setIsLoggedIn(true);
-    }
-    const savedTheme = localStorage.getItem('admin_dark_mode');
-    if (savedTheme === 'true') setIsDarkMode(true);
-  }, []);
+  const [isDarkMode, setIsDarkMode] = useState(
+    () => typeof window !== 'undefined' && localStorage.getItem('admin_dark_mode') === 'true'
+  );
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -268,7 +261,7 @@ function DashboardContent({ isDarkMode }: { isDarkMode: boolean }) {
   });
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [, setIsLoading] = useState(true);
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<{ name: string; orders: number; revenue: number }[]>([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -547,7 +540,7 @@ function ProductsContent({ isDarkMode }: { isDarkMode: boolean }) {
         toast.success('Produk berhasil ditambahkan');
       }
       setIsDialogOpen(false);
-    } catch (error) {
+    } catch {
       toast.error('Gagal menyimpan produk');
     }
   };
@@ -557,7 +550,7 @@ function ProductsContent({ isDarkMode }: { isDarkMode: boolean }) {
       try {
         await deleteProduct(id);
         toast.success('Produk berhasil dihapus');
-      } catch (error) {
+      } catch {
         toast.error('Gagal menghapus produk');
       }
     }

@@ -70,7 +70,7 @@ export function ReviewsPage() {
 
   // Filter and sort reviews
   const filteredReviews = useMemo(() => {
-    let result = productReviews.filter(review => {
+    const result = productReviews.filter(review => {
       if (activeFilter === 'all') return true;
       if (activeFilter === 'with_photo') return false; // No photo support yet
       return review.rating === parseInt(activeFilter);
