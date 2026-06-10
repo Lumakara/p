@@ -136,7 +136,7 @@ export function HomeSection() {
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
-    let result = products.filter((product) => {
+    const result = products.filter((product) => {
       const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
       const matchesSearch = searchQuery === '' || 
         product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

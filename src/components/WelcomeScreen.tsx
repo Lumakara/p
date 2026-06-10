@@ -11,6 +11,14 @@ export function WelcomeScreen() {
   const [textOpacity, setTextOpacity] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Precompute floating particle positions once (avoids impure Math.random in render)
+  const [floatingParticles] = useState(() =>
+    Array.from({ length: 6 }, () => ({
+      top: 10 + Math.random() * 80,
+      left: 10 + Math.random() * 80,
+    }))
+  );
+
   // Particle animation
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -183,13 +191,13 @@ export function WelcomeScreen() {
         </div>
         
         {/* Floating particles around logo */}
-        {[...Array(6)].map((_, i) => (
+        {floatingParticles.map((particle, i) => (
           <div
             key={i}
             className="absolute w-2 h-2 bg-yellow-300 rounded-full animate-float"
             style={{
-              top: `${10 + Math.random() * 80}%`,
-              left: `${10 + Math.random() * 80}%`,
+              top: `${particle.top}%`,
+              left: `${particle.left}%`,
               animationDelay: `${i * 0.2}s`,
               animationDuration: '2s',
             }}
