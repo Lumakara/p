@@ -23,15 +23,27 @@ export interface AiResult {
   source: "ai_v1" | "ai_v2" | "fallback";
 }
 
-function extractMessage(body: any): string | null {
-  if (!body || body.status === false) return null;
+interface NeoxrBody {
+  status?: boolean;
+  data?: unknown;
+  result?: unknown;
+  message?: unknown;
+}
+
+function extractMessage(body: unknown): string | null {
+  if (!body || typeof body !== "object") return null;
+  const b = body as NeoxrBody;
+  if (b.status === false) return null;
   // NeoXR responses vary: data can be a string or an object with `message`.
-  const data = body.data ?? body.result ?? body.message;
+  const data = b.data ?? b.result ?? b.message;
   if (!data) return null;
   if (typeof data === "string") return data;
-  if (typeof data.message === "string") return data.message;
-  if (typeof data.result === "string") return data.result;
-  if (typeof data.answer === "string") return data.answer;
+  if (typeof data === "object") {
+    const d = data as { message?: unknown; result?: unknown; answer?: unknown };
+    if (typeof d.message === "string") return d.message;
+    if (typeof d.result === "string") return d.result;
+    if (typeof d.answer === "string") return d.answer;
+  }
   return null;
 }
 

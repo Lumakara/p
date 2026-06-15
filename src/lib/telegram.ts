@@ -147,12 +147,19 @@ export async function forwardUserChat(o: {
   return sendTelegramMessage(text);
 }
 
+interface TelegramUpdate {
+  message?: {
+    text?: string;
+    reply_to_message?: { text?: string };
+  };
+}
+
 /**
  * Parse an owner reply from a Telegram update.
  * Returns the target userId and the reply text, or null if not a chat reply.
  */
 export function parseOwnerReply(
-  update: any,
+  update: TelegramUpdate,
 ): { userId: string; text: string } | null {
   const msg = update?.message;
   if (!msg || !msg.text) return null;

@@ -86,7 +86,6 @@ export default function DashboardOverview() {
     load();
     const id = setInterval(load, 15000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading || !stats) {
