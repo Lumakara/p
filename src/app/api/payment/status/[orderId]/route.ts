@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { getDepositStatus } from "@/lib/payment";
+import { getDepositStatus, generateProductKey } from "@/lib/payment";
 import { notifyPaidOrder, notifyFailedOrder } from "@/lib/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function generateProductKey(): string {
-  const part = () =>
-    Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `KEY-${part()}-${part()}-${part()}`;
-}
 
 /**
  * GET /api/payment/status/[orderId]
@@ -25,13 +19,16 @@ export async function GET(
   try {
     const { orderId } = await params;
     const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
     // Owners of the order only (admins can use the admin endpoints).
-    if (order.userId && userId && order.userId !== userId) {
+    if (order.userId !== userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -98,15 +95,37 @@ export async function GET(
         return NextResponse.json({ orderId: order.id, status: "PENDING" });
       }
 
+      const paidAt = remote.paidAt ? new Date(remote.paidAt) : new Date();
       const productKey = generateProductKey();
-      const updated = await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          status: "PAID",
-          paidAt: remote.paidAt ? new Date(remote.paidAt) : new Date(),
-          productKey,
-        },
+
+      // Atomically transition PENDING -> PAID exactly once. Concurrent polls
+      // race here; only the request whose conditional update matches a still
+      // PENDING row "wins" and fulfils the order (mints the key, decrements
+      // stock, notifies). The rest return the already-persisted state.
+      const won = await prisma.$transaction(async (tx) => {
+        const res = await tx.order.updateMany({
+          where: { id: order.id, status: "PENDING" },
+          data: { status: "PAID", paidAt, productKey },
+        });
+        if (res.count === 0) return false;
+        if (order.productId) {
+          await tx.product.updateMany({
+            where: { id: order.productId, stock: { gt: 0 } },
+            data: { stock: { decrement: 1 } },
+          });
+        }
+        return true;
       });
+
+      if (!won) {
+        const fresh = await prisma.order.findUnique({ where: { id: order.id } });
+        return NextResponse.json({
+          orderId: order.id,
+          status: fresh?.status ?? "PAID",
+          paidAt: fresh?.paidAt,
+          productKey: fresh?.productKey,
+        });
+      }
 
       await prisma.webhookLog.create({
         data: {
@@ -119,19 +138,19 @@ export async function GET(
       });
 
       notifyPaidOrder({
-        orderId: updated.id,
-        productName: updated.productName,
-        amount: updated.amount,
-        customer: updated.customerName || "Customer",
+        orderId: order.id,
+        productName: order.productName,
+        amount: order.amount,
+        customer: order.customerName || "Customer",
       }).catch((err) => {
         console.warn("[payment/status] notifyPaidOrder failed:", err);
       });
 
       return NextResponse.json({
-        orderId: updated.id,
+        orderId: order.id,
         status: "PAID",
-        paidAt: updated.paidAt,
-        productKey: updated.productKey,
+        paidAt,
+        productKey,
       });
     }
 

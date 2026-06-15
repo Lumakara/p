@@ -22,6 +22,12 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
+    if (message.length > 4000) {
+      return NextResponse.json(
+        { error: "Pesan terlalu panjang (maks 4000 karakter)" },
+        { status: 400 },
+      );
+    }
 
     let session = await prisma.chatSession.findFirst({
       where: { userId, mode: "OWNER" },

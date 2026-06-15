@@ -17,13 +17,22 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(req: NextRequest) {
   try {
-    // Verify Telegram secret token header.
+    // Verify Telegram secret token header. Fail closed: if no secret is
+    // configured we cannot authenticate the caller, so reject rather than
+    // accept unauthenticated owner-reply injection.
     const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
-    if (secret) {
-      const got = req.headers.get("x-telegram-bot-api-secret-token");
-      if (got !== secret) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
+    if (!secret) {
+      console.error(
+        "[telegram/webhook] TELEGRAM_WEBHOOK_SECRET not configured; rejecting webhook",
+      );
+      return NextResponse.json(
+        { error: "Webhook not configured" },
+        { status: 503 },
+      );
+    }
+    const got = req.headers.get("x-telegram-bot-api-secret-token");
+    if (got !== secret) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const update = await req.json().catch(() => ({}));

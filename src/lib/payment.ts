@@ -9,6 +9,8 @@
  * Auth is via the "X-API-Key" header.
  */
 
+import { randomInt, randomBytes } from "crypto";
+
 const BASE_URL =
   process.env.PAYMENT_BASE_URL || "https://ramashop.my.id/api/public";
 const API_KEY = process.env.PAYMENT_API_KEY || "";
@@ -40,10 +42,38 @@ export interface DepositStatusResult {
   paidAt?: string;
 }
 
-async function safeJson(res: Response): Promise<any> {
+interface DepositCreateEnvelope {
+  success?: boolean;
+  message?: string;
+  data?: {
+    depositId: string;
+    amount: number;
+    uniqueCode: number;
+    totalAmount: number;
+    fee?: number;
+    qrImage: string;
+    qrString: string;
+    status?: string;
+    expiredAt: string;
+  };
+}
+
+interface DepositStatusEnvelope {
+  status?: boolean;
+  message?: string;
+  data?: { status?: string; paidAmount?: number; paidAt?: string };
+}
+
+interface BalanceEnvelope {
+  success?: boolean;
+  message?: string;
+  data?: { balance?: number; username?: string; email?: string };
+}
+
+async function safeJson<T = unknown>(res: Response): Promise<T> {
   const text = await res.text();
   try {
-    return JSON.parse(text);
+    return JSON.parse(text) as T;
   } catch {
     throw new Error(
       `Payment gateway returned non-JSON response (status ${res.status}): ${text.slice(0, 200)}`,
@@ -64,7 +94,7 @@ export async function createDeposit(
     cache: "no-store",
   });
 
-  const body = await safeJson(res);
+  const body = await safeJson<DepositCreateEnvelope>(res);
   if (!res.ok || !body?.success) {
     throw new Error(
       body?.message || `Failed to create deposit (status ${res.status})`,
@@ -72,6 +102,9 @@ export async function createDeposit(
   }
 
   const d = body.data;
+  if (!d) {
+    throw new Error("Payment gateway returned a malformed deposit response");
+  }
   return {
     depositId: d.depositId,
     amount: d.amount,
@@ -98,7 +131,7 @@ export async function getDepositStatus(
     cache: "no-store",
   });
 
-  const body = await safeJson(res);
+  const body = await safeJson<DepositStatusEnvelope>(res);
   if (!res.ok || body?.status !== true) {
     throw new Error(
       body?.message || `Failed to fetch deposit status (status ${res.status})`,
@@ -125,7 +158,7 @@ export async function getBalance(): Promise<{
     headers: headers(),
     cache: "no-store",
   });
-  const body = await safeJson(res);
+  const body = await safeJson<BalanceEnvelope>(res);
   if (!res.ok || !body?.success) {
     throw new Error(body?.message || "Failed to fetch balance");
   }
@@ -142,6 +175,12 @@ export function generateOrderId(): string {
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, "0");
   const d = String(now.getDate()).padStart(2, "0");
-  const rand = Math.floor(10000 + Math.random() * 89999);
+  const rand = randomInt(10000, 100000);
   return `ORD-${y}${m}${d}-${rand}`;
+}
+
+/** Generate a non-guessable product key in the format KEY-XXXX-XXXX-XXXX. */
+export function generateProductKey(): string {
+  const part = () => randomBytes(3).toString("hex").slice(0, 4).toUpperCase();
+  return `KEY-${part()}-${part()}-${part()}`;
 }
