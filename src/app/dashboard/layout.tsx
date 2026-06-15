@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { isAdmin, syncCurrentUser } from "@/lib/auth";
+import { isAdmin } from "@/lib/auth";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 
 export const dynamic = "force-dynamic";
@@ -9,9 +9,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Keep the DB user in sync, then enforce admin access (defense in depth;
-  // middleware also guards these routes).
-  await syncCurrentUser().catch(() => null);
+  // Defense in depth; middleware also guards these routes.
   if (!(await isAdmin())) {
     redirect("/");
   }

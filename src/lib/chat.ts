@@ -1,19 +1,23 @@
 /**
  * NeoXR AI chat client (server-side only) with automatic v1 -> v2 fallback.
  *
- *   AI v1 (Kimi K2):  GET https://api.neoxr.eu/api/kimi?q=...&apikey=...
- *   AI v2 (Chat GPT-4): GET https://api.neoxr.eu/api/gpt4?q=...&apikey=...
+ *   AI v1 (primary, Chat GPT-3): GET https://api.neoxr.eu/api/gpt3?q=...&apikey=...
+ *   AI v2 (fallback, Chat GPT-4): GET https://api.neoxr.eu/api/gpt4?q=...&apikey=...
  *
- * If v1 times out / returns an error, we automatically retry against v2.
- * If both fail, we return a fallback message instructing the user to
+ * If v1 times out / returns an error / non-JSON, we automatically retry against
+ * v2. If both fail, we return a fallback message instructing the user to
  * contact the owner directly.
+ *
+ * NOTE: gpt4 is verified working with the provided key. The exact "Chat GPT-3"
+ * slug could not be confirmed against the live API, so CHATBOT_V1_ENDPOINT
+ * defaults to "gpt3" and gracefully falls back to gpt4 if that slug 404s.
  */
 
 const BASE_URL = process.env.CHATBOT_BASE_URL || "https://api.neoxr.eu/api";
 const API_KEY = process.env.CHATBOT_API_KEY || "";
-const V1 = process.env.CHATBOT_V1_ENDPOINT || "kimi";
+const V1 = process.env.CHATBOT_V1_ENDPOINT || "gpt3";
 const V2 = process.env.CHATBOT_V2_ENDPOINT || "gpt4";
-const TIMEOUT_MS = 5000;
+const TIMEOUT_MS = 8000;
 
 export const FALLBACK_MESSAGE =
   "Maaf, asisten AI sedang tidak tersedia. Silakan hubungi owner langsung melalui tombol Chat Owner.";

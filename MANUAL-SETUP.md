@@ -11,7 +11,7 @@ eksternal. Lakukan ini **sekali** sebelum menjalankan aplikasi.
 ## 0. Prasyarat
 
 - Node.js >= 18 (disarankan 20+)
-- Akun: Neon, Clerk, RamaShop, Cloudflare, Cloudinary, Telegram, Vercel
+- Akun: Neon, Google Cloud (OAuth), GitHub (OAuth), RamaShop, Cloudflare, Cloudinary, Telegram, Vercel
 
 ```bash
 cp .env.example .env
@@ -39,26 +39,26 @@ npm run db:seed     # isi 6 produk contoh + setting default
 
 ---
 
-## 2. Authentication — Clerk
+## 2. Authentication — Auth.js (NextAuth v5)
 
-Docs: https://clerk.com/docs/nextjs/getting-started/quickstart
+Login via **Google**, **GitHub**, dan **Email/Password**.
 
-1. Buat aplikasi di https://dashboard.clerk.com
-2. Di **API Keys**, salin:
-   - `Publishable key` → `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-   - `Secret key` → `CLERK_SECRET_KEY`
-3. Aktifkan provider login di **User & Authentication → Social Connections**:
-   - GitHub
-   - Google
-4. Di **Email, Phone, Username**, aktifkan: Email, Username, dan Phone number.
-5. **Set admin:** ada 2 cara (pilih salah satu):
-   - **Cara A (metadata):** Buka user kamu → **Metadata → Public metadata**,
-     tambahkan: `{ "role": "admin" }`.
-   - **Cara B (env):** Isi `ADMIN_USER_IDS` di `.env` dengan Clerk User ID kamu
-     (format `user_xxx`), pisahkan dengan koma untuk banyak admin.
+1. Generate secret (sudah otomatis ada di `.env`, atau buat baru):
+   `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` → `AUTH_SECRET`.
+2. **Google (Google Cloud Console):**
+   - https://console.cloud.google.com → APIs & Services → Credentials → Create OAuth client ID (Web).
+   - Authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+     (tambah juga domain produksi `/api/auth/callback/google`).
+   - Isi `AUTH_GOOGLE_ID` & `AUTH_GOOGLE_SECRET`.
+3. **GitHub:**
+   - GitHub → Settings → Developer settings → OAuth Apps → New OAuth App.
+   - Authorization callback URL: `http://localhost:3000/api/auth/callback/github`.
+   - Isi `AUTH_GITHUB_ID` & `AUTH_GITHUB_SECRET`.
+4. **Email/Password** aktif otomatis (disimpan sebagai bcrypt hash di DB).
+5. **Set admin:** isi `ADMIN_EMAILS` (pisahkan koma). Email tsb otomatis jadi ADMIN
+   saat login/daftar. Default: `fakhulrohman2@gmail.com`.
 
-> Catatan: middleware melindungi `/dashboard` dan `/api/admin`. Non-admin
-> diarahkan ke halaman utama.
+> Middleware melindungi `/dashboard` & `/api/admin` (admin only) dan `/orders` (login).
 
 ---
 
@@ -151,7 +151,7 @@ vercel env pull .env
 - [ ] `.env` terisi semua
 - [ ] `npm install`
 - [ ] `npm run db:push && npm run db:seed`
-- [ ] Set admin (Clerk metadata atau `ADMIN_USER_IDS`)
+- [ ] Set admin (`ADMIN_EMAILS` di `.env`)
 - [ ] `npm run dev` → buka http://localhost:3000
 - [ ] Dashboard admin: http://localhost:3000/dashboard
 - [ ] Test pembayaran, chat AI, chat owner, notifikasi Telegram

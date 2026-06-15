@@ -11,7 +11,7 @@ dashboard yang lengkap.
 
 **Frontend:** Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, shadcn/ui
 **Backend:** Next.js API Routes (TypeScript), Prisma ORM, PostgreSQL (Neon Cloud)
-**Auth:** Clerk (GitHub, Google, Email/Username/Phone)
+**Auth:** Auth.js / NextAuth v5 (Google, GitHub, Email/Password)
 **Payment:** RamaShop (QRIS deposit + polling)
 **AI Chatbot:** NeoXR (Kimi K2 v1 → GPT‑4 v2 fallback)
 **Notifikasi:** Telegram Bot (pusat notifikasi owner + chat bridge)
@@ -38,7 +38,7 @@ npm run db:seed               # isi produk contoh
 npm run dev                   # http://localhost:3000
 ```
 
-Dashboard admin: `/dashboard` (set admin via Clerk metadata atau `ADMIN_USER_IDS`).
+Dashboard admin: `/dashboard` (set admin via `ADMIN_EMAILS` di `.env`).
 
 ## Dokumentasi
 

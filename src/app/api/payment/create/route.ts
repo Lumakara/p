@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { createDeposit, generateOrderId } from "@/lib/payment";
 import { notifyNewOrder } from "@/lib/telegram";
 import { verifyTurnstile } from "@/lib/turnstile";
-import { syncCurrentUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +15,8 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = await auth();
+    const session = await auth();
+    const userId = session?.user?.id;
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -80,14 +80,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Make sure the user exists in our DB (best-effort).
-    await syncCurrentUser().catch(() => null);
-    const user = await currentUser();
-    const customerName =
-      [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
-      user?.username ||
-      "Customer";
-    const customerEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+    // Resolve customer info from the session.
+    const customerName = session.user?.name || "Customer";
+    const customerEmail = session.user?.email ?? null;
 
     const orderId = generateOrderId();
 

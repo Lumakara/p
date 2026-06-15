@@ -10,7 +10,7 @@ Arsitektur teknis & alur kerja untuk developer.
 | Styling | Tailwind CSS + shadcn/ui (Radix) |
 | State (client) | Zustand (cart, theme color, language, music, chat user id) |
 | Theme | next-themes (dark/light) + CSS var color schemes |
-| Auth | Clerk (`@clerk/nextjs` v6) |
+| Auth | Auth.js / NextAuth v5 (`next-auth`) — Google, GitHub, Credentials |
 | DB | PostgreSQL (Neon) via Prisma 6 |
 | Payment | RamaShop (QRIS deposit + polling) |
 | Chatbot | NeoXR (Kimi v1 → GPT-4 v2 fallback) |
@@ -40,9 +40,9 @@ prisma/
   schema.prisma        # model DB
   seed.ts              # data awal
 src/
-  middleware.ts        # Clerk middleware + proteksi /dashboard & /api/admin
+  middleware.ts        # Auth.js middleware + proteksi /dashboard, /orders, /api/admin
   app/
-    layout.tsx         # ClerkProvider + ThemeProvider
+    layout.tsx         # SessionProvider + ThemeProvider
     providers.tsx      # next-themes + sonner Toaster
     globals.css
     (store)/           # halaman publik dengan Header + BottomNav + ChatWidget
@@ -104,4 +104,4 @@ idempotensi (status terminal tidak diproses ulang), semua dicatat di `WebhookLog
 - Server pages (`getProducts`, dst.) memakai `force-dynamic` dan menelan error
   DB agar UI tetap render walau env belum lengkap.
 - Real-time memakai **polling**, bukan WebSocket/SSE (cocok untuk serverless Vercel).
-- Admin ditentukan oleh: Clerk `publicMetadata.role === "admin"` ATAU `ADMIN_USER_IDS`.
+- Admin ditentukan oleh `ADMIN_EMAILS` (email di-promote ke role ADMIN saat login).

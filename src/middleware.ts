@@ -1,50 +1,40 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
+import { authConfig } from "@/auth.config";
 
-// Routes that require an authenticated session.
-const isProtectedRoute = createRouteMatcher([
-  "/dashboard(.*)",
-  "/orders(.*)",
-  "/api/admin(.*)",
-]);
+const { auth } = NextAuth(authConfig);
 
-const isAdminRoute = createRouteMatcher(["/dashboard(.*)", "/api/admin(.*)"]);
+const PROTECTED = [/^\/dashboard(\/.*)?$/, /^\/orders(\/.*)?$/, /^\/api\/admin(\/.*)?$/];
+const ADMIN_ONLY = [/^\/dashboard(\/.*)?$/, /^\/api\/admin(\/.*)?$/];
 
-function adminIds(): string[] {
-  return (process.env.ADMIN_USER_IDS || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
+export default auth((req) => {
+  const { pathname } = req.nextUrl;
+  const isProtected = PROTECTED.some((re) => re.test(pathname));
+  if (!isProtected) return;
 
-export default clerkMiddleware(async (auth, req) => {
-  if (!isProtectedRoute(req)) return;
+  const session = req.auth;
 
-  const { userId, sessionClaims, redirectToSignIn } = await auth();
-
-  if (!userId) {
-    return redirectToSignIn({ returnBackUrl: req.url });
+  if (!session?.user) {
+    if (pathname.startsWith("/api")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const signInUrl = new URL("/sign-in", req.nextUrl.origin);
+    signInUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(signInUrl);
   }
 
-  if (isAdminRoute(req)) {
-    const role = (sessionClaims as { metadata?: { role?: string } } | null)
-      ?.metadata?.role;
-    const allowed = role === "admin" || adminIds().includes(userId);
-    if (!allowed) {
-      // Non-admins are sent to the home page (or 403 for API routes).
-      if (req.nextUrl.pathname.startsWith("/api")) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-      return NextResponse.redirect(new URL("/", req.url));
+  const isAdminRoute = ADMIN_ONLY.some((re) => re.test(pathname));
+  if (isAdminRoute && session.user.role !== "ADMIN") {
+    if (pathname.startsWith("/api")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+    return NextResponse.redirect(new URL("/", req.nextUrl.origin));
   }
 });
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and static files.
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes.
     "/(api|trpc)(.*)",
   ],
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser, SignedIn, SignedOut, SignInButton, SignOutButton } from "@clerk/nextjs";
+import { useSession, signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { Moon, Sun, Music, Globe, Palette, LogOut, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -19,7 +19,9 @@ const COLORS: { id: ThemeColor; label: string; className: string }[] = [
 ];
 
 export default function ProfilePage() {
-  const { user } = useUser();
+  const { data: session } = useSession();
+  const user = session?.user;
+  const isAdmin = user?.role === "ADMIN";
   const { theme, setTheme } = useTheme();
   const themeColor = useAppStore((s) => s.themeColor);
   const setThemeColor = useAppStore((s) => s.setThemeColor);
@@ -32,26 +34,32 @@ export default function ProfilePage() {
     <div className="space-y-4 max-w-lg mx-auto">
       <h1 className="text-xl font-bold">Profil & Pengaturan</h1>
 
-      <SignedIn>
+      {user ? (
         <Card className="p-4 flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={user?.imageUrl} alt="avatar" className="h-12 w-12 rounded-full" />
+          <img
+            src={
+              user.image ||
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || "User")}`
+            }
+            alt="avatar"
+            className="h-12 w-12 rounded-full"
+          />
           <div>
-            <p className="font-semibold">{user?.fullName || user?.username}</p>
-            <p className="text-sm text-muted-foreground">
-              {user?.primaryEmailAddress?.emailAddress}
-            </p>
+            <p className="font-semibold">{user.name || "User"}</p>
+            <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
         </Card>
-      </SignedIn>
-      <SignedOut>
+      ) : (
         <Card className="p-4 text-center space-y-2">
-          <p className="text-sm text-muted-foreground">Masuk untuk melihat riwayat & profil.</p>
-          <SignInButton mode="modal">
+          <p className="text-sm text-muted-foreground">
+            Masuk untuk melihat riwayat & profil.
+          </p>
+          <Link href="/sign-in">
             <Button className="w-full">Masuk / Daftar</Button>
-          </SignInButton>
+          </Link>
         </Card>
-      </SignedOut>
+      )}
 
       {/* Appearance */}
       <Card className="p-4 space-y-4">
@@ -112,25 +120,29 @@ export default function ProfilePage() {
         </div>
       </Card>
 
-      <SignedIn>
+      {user && (
         <div className="space-y-2">
           <Link href="/orders">
             <Button variant="outline" className="w-full justify-start">
               Riwayat Transaksi
             </Button>
           </Link>
-          <Link href="/dashboard">
-            <Button variant="outline" className="w-full justify-start">
-              <ShieldCheck className="h-4 w-4 mr-2" /> Dashboard Admin
-            </Button>
-          </Link>
-          <SignOutButton>
-            <Button variant="ghost" className="w-full justify-start text-red-500">
-              <LogOut className="h-4 w-4 mr-2" /> Keluar
-            </Button>
-          </SignOutButton>
+          {isAdmin && (
+            <Link href="/dashboard">
+              <Button variant="outline" className="w-full justify-start">
+                <ShieldCheck className="h-4 w-4 mr-2" /> Dashboard Admin
+              </Button>
+            </Link>
+          )}
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-red-500"
+            onClick={() => signOut({ callbackUrl: "/" })}
+          >
+            <LogOut className="h-4 w-4 mr-2" /> Keluar
+          </Button>
         </div>
-      </SignedIn>
+      )}
     </div>
   );
 }

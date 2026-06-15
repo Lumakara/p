@@ -4,14 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTheme } from "next-themes";
-import {
-  SignedIn,
-  SignedOut,
-  UserButton,
-  SignInButton,
-} from "@clerk/nextjs";
 import { Moon, Sun, ShoppingCart, Search, Globe, Music, Music2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UserMenu } from "@/components/auth/UserMenu";
 import { useAppStore } from "@/store/appStore";
 import { useT } from "@/lib/i18n";
 
@@ -91,16 +86,7 @@ export function Header() {
             )}
           </Link>
 
-          <SignedIn>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn>
-          <SignedOut>
-            <SignInButton mode="modal">
-              <Button size="sm" className="ml-1">
-                {t("signIn")}
-              </Button>
-            </SignInButton>
-          </SignedOut>
+          <UserMenu />
         </div>
       </div>
     </header>

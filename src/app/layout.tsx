@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -33,12 +32,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
-      <html lang="id" suppressHydrationWarning>
-        <body className="antialiased" suppressHydrationWarning>
-          <Providers>{children}</Providers>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="id" suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
   );
 }

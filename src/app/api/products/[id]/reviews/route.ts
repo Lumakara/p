@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -12,7 +12,8 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const { userId } = await auth();
+    const session = await auth();
+    const userId = session?.user?.id;
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -32,18 +33,15 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const user = await currentUser();
-    const userName =
-      [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
-      user?.username ||
-      "User";
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const userName = user?.name || user?.username || session.user?.name || "User";
 
     const review = await prisma.review.create({
       data: {
         productId: id,
         userId,
         userName,
-        userAvatar: user?.imageUrl,
+        userAvatar: user?.image || session.user?.image,
         rating,
         comment,
       },

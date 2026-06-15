@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useUser, SignInButton } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import { Trash2, Minus, Plus, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,7 +14,8 @@ import { rupiah } from "@/lib/format";
 
 export default function CartPage() {
   const router = useRouter();
-  const { isSignedIn } = useUser();
+  const { status } = useSession();
+  const isSignedIn = status === "authenticated";
   const cart = useAppStore((s) => s.cart);
   const removeFromCart = useAppStore((s) => s.removeFromCart);
   const updateQuantity = useAppStore((s) => s.updateQuantity);
@@ -110,9 +111,9 @@ export default function CartPage() {
             Bayar Sekarang
           </Button>
         ) : (
-          <SignInButton mode="modal">
+          <Link href="/sign-in">
             <Button className="w-full">Masuk untuk Bayar</Button>
-          </SignInButton>
+          </Link>
         )}
       </Card>
     </div>

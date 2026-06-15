@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser, SignInButton } from "@clerk/nextjs";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Star, Check, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,7 +23,8 @@ export function ProductDetailClient({
   initialReviews: Review[];
 }) {
   const router = useRouter();
-  const { isSignedIn } = useUser();
+  const { status } = useSession();
+  const isSignedIn = status === "authenticated";
   const addToCart = useAppStore((s) => s.addToCart);
   const tiers = product.tiers || [];
   const [tierName, setTierName] = useState(tiers[0]?.name);
@@ -161,9 +163,9 @@ export function ProductDetailClient({
                 Beli Sekarang · {rupiah(price)}
               </Button>
             ) : (
-              <SignInButton mode="modal">
-                <Button className="flex-1">Masuk untuk Beli</Button>
-              </SignInButton>
+              <Link href="/sign-in" className="flex-1">
+                <Button className="w-full">Masuk untuk Beli</Button>
+              </Link>
             )}
             <Button
               variant="outline"

@@ -1,85 +1,30 @@
 /**
- * Auth helpers built on Clerk (server-side).
- * Docs: https://clerk.com/docs/nextjs/getting-started/quickstart
+ * Auth helpers built on Auth.js (NextAuth v5).
  */
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/prisma";
-import type { Role } from "@prisma/client";
+import { auth } from "@/auth";
 
-function adminIds(): string[] {
-  return (process.env.ADMIN_USER_IDS || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+/** Returns the current user id, or null if not signed in. */
+export async function getUserId(): Promise<string | null> {
+  const session = await auth();
+  return session?.user?.id ?? null;
+}
+
+/** Returns the full session user, or null. */
+export async function getCurrentUser() {
+  const session = await auth();
+  return session?.user ?? null;
 }
 
 /** Determine whether the current session belongs to an admin. */
 export async function isAdmin(): Promise<boolean> {
-  const { userId, sessionClaims } = await auth();
-  if (!userId) return false;
-
-  // 1) Clerk publicMetadata.role === "admin"
-  const role = (sessionClaims as { metadata?: { role?: string } } | null)
-    ?.metadata?.role;
-  if (role === "admin") return true;
-
-  // 2) Allow-list via env
-  if (adminIds().includes(userId)) return true;
-
-  // 3) DB role
-  const dbUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
-  return dbUser?.role === "ADMIN";
+  const session = await auth();
+  return session?.user?.role === "ADMIN";
 }
 
-/** Throws if the current user is not an admin. */
+/** Throws if the current user is not an admin. Returns the admin user id. */
 export async function requireAdmin(): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("UNAUTHENTICATED");
-  if (!(await isAdmin())) throw new Error("FORBIDDEN");
-  return userId;
-}
-
-/**
- * Sync the Clerk user into our database (upsert). Call this from server
- * components/routes after sign-in so that orders, reviews and the admin user
- * list stay in sync. Admin allow-list ids are promoted to ADMIN role.
- */
-export async function syncCurrentUser() {
-  const user = await currentUser();
-  if (!user) return null;
-
-  const email = user.primaryEmailAddress?.emailAddress ?? null;
-  const phone = user.primaryPhoneNumber?.phoneNumber ?? null;
-  const name =
-    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || null;
-  const provider =
-    user.externalAccounts?.[0]?.provider?.replace("oauth_", "") ||
-    (email ? "email" : null);
-
-  const role: Role = adminIds().includes(user.id) ? "ADMIN" : "USER";
-
-  return prisma.user.upsert({
-    where: { id: user.id },
-    update: {
-      email: email ?? undefined,
-      name: name ?? undefined,
-      username: user.username ?? undefined,
-      phone: phone ?? undefined,
-      avatar: user.imageUrl ?? undefined,
-      provider: provider ?? undefined,
-    },
-    create: {
-      id: user.id,
-      email,
-      name,
-      username: user.username,
-      phone,
-      avatar: user.imageUrl,
-      provider,
-      role,
-    },
-  });
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHENTICATED");
+  if (session.user.role !== "ADMIN") throw new Error("FORBIDDEN");
+  return session.user.id;
 }

@@ -18,7 +18,7 @@ export async function GET() {
         email: u.email,
         username: u.username,
         phone: u.phone,
-        avatar: u.avatar,
+        avatar: u.image,
         provider: u.provider,
         role: u.role,
         status: u.status,

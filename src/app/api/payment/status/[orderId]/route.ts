@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getDepositStatus } from "@/lib/payment";
 import { notifyPaidOrder, notifyFailedOrder } from "@/lib/telegram";
@@ -24,7 +24,8 @@ export async function GET(
 ) {
   try {
     const { orderId } = await params;
-    const { userId } = await auth();
+    const session = await auth();
+    const userId = session?.user?.id;
 
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) {
