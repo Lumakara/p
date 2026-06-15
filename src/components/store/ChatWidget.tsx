@@ -53,8 +53,8 @@ export function ChatWidget() {
         if (!open && ownerReplies.length) setUnread((u) => u + ownerReplies.length);
         scrollToBottom();
       }
-    } catch {
-      /* ignore polling errors */
+    } catch (err) {
+      console.warn("[chat] polling failed:", err);
     }
   }, [userId, open]);
 

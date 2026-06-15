@@ -23,6 +23,7 @@ export async function GET(
     return NextResponse.json({ product });
   } catch (err: unknown) {
     const m = err instanceof Error ? err.message : "Internal error";
+    console.error("[products/detail]", m);
     return NextResponse.json({ error: m }, { status: 500 });
   }
 }

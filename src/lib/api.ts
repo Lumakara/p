@@ -19,7 +19,9 @@ export async function withAdmin<T>(
             target: audit.target,
           },
         })
-        .catch(() => {});
+        .catch((err) => {
+          console.error("[admin] audit log failed:", err);
+        });
     }
     return NextResponse.json(result ?? { ok: true });
   } catch (err: unknown) {

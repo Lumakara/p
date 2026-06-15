@@ -65,7 +65,9 @@ export async function GET(
         amount: updated.amount,
         customer: updated.customerName || "Customer",
         reason: "Waktu pembayaran habis (timeout)",
-      }).catch(() => {});
+      }).catch((err) => {
+        console.warn("[payment/status] notifyFailedOrder failed:", err);
+      });
       return NextResponse.json({
         orderId: updated.id,
         status: "EXPIRED",
@@ -121,7 +123,9 @@ export async function GET(
         productName: updated.productName,
         amount: updated.amount,
         customer: updated.customerName || "Customer",
-      }).catch(() => {});
+      }).catch((err) => {
+        console.warn("[payment/status] notifyPaidOrder failed:", err);
+      });
 
       return NextResponse.json({
         orderId: updated.id,

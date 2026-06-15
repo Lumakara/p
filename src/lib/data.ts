@@ -54,7 +54,8 @@ export async function getCategories(): Promise<string[]> {
       distinct: ["category"],
     });
     return rows.map((r) => r.category);
-  } catch {
+  } catch (err) {
+    console.error("[data] getCategories failed:", err);
     return [];
   }
 }

@@ -43,9 +43,13 @@ export async function POST(req: NextRequest) {
 
     const delivered = await forwardUserChat({ userId, message });
 
+    if (!delivered && isTelegramConfigured()) {
+      console.warn("[chat/owner] Telegram configured but message delivery failed for user:", userId);
+    }
+
     return NextResponse.json({
       ok: true,
-      delivered: delivered || isTelegramConfigured(),
+      delivered,
       sessionId: session.id,
       note: delivered
         ? "Pesan terkirim ke owner."
