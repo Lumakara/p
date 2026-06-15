@@ -81,7 +81,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Make sure the user exists in our DB (best-effort).
-    await syncCurrentUser().catch(() => null);
+    await syncCurrentUser().catch((err) => {
+      console.warn("[payment/create] syncCurrentUser failed:", err);
+    });
     const user = await currentUser();
     const customerName =
       [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
@@ -122,7 +124,9 @@ export async function POST(req: NextRequest) {
       totalAmount: order.totalAmount ?? order.amount,
       customer: customerName,
       expiredAt: order.expiredAt?.toISOString(),
-    }).catch(() => {});
+    }).catch((err) => {
+      console.warn("[payment/create] notifyNewOrder failed:", err);
+    });
 
     return NextResponse.json({
       orderId: order.id,

@@ -39,7 +39,9 @@ export async function POST(req: NextRequest) {
           verified: true,
         },
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("[telegram/webhook] failed to log update:", err);
+      });
 
     if (!reply) {
       return NextResponse.json({ ok: true });

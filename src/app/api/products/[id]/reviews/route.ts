@@ -66,6 +66,7 @@ export async function POST(
     return NextResponse.json({ review });
   } catch (err: unknown) {
     const m = err instanceof Error ? err.message : "Internal error";
+    console.error("[products/reviews]", m);
     return NextResponse.json({ error: m }, { status: 500 });
   }
 }
