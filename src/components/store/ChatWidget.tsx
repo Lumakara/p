@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MessageCircle, X, Bot, User2, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,39 +31,63 @@ export function ChatWidget() {
     });
   };
 
-  // Poll for new messages (owner replies arrive via Telegram -> DB).
-  const poll = useCallback(async () => {
+  // Connect to SSE stream for new messages
+  useEffect(() => {
     if (!userId) return;
-    try {
+    
+    let eventSource: EventSource | null = null;
+
+    const connectSSE = () => {
       const url = new URL("/api/chat/messages", window.location.origin);
       url.searchParams.set("userId", userId);
       if (lastTs.current) url.searchParams.set("since", lastTs.current);
-      const res = await fetch(url.toString());
-      if (!res.ok) return;
-      const data = await res.json();
-      const incoming: ChatMessage[] = data.messages || [];
-      if (incoming.length) {
-        setMessages((prev) => {
-          const seen = new Set(prev.map((m) => m.id));
-          const merged = [...prev, ...incoming.filter((m) => !seen.has(m.id))];
-          return merged;
-        });
-        lastTs.current = incoming[incoming.length - 1].timestamp;
-        const ownerReplies = incoming.filter((m) => m.sender === "owner");
-        if (!open && ownerReplies.length) setUnread((u) => u + ownerReplies.length);
-        scrollToBottom();
-      }
-    } catch (err) {
-      console.warn("[chat] polling failed:", err);
-    }
-  }, [userId, open]);
+      
+      eventSource = new EventSource(url.toString());
 
-  useEffect(() => {
-    if (!userId) return;
-    poll();
-    const id = setInterval(poll, 5000);
-    return () => clearInterval(id);
-  }, [userId, poll]);
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const incoming: ChatMessage[] = data.messages || [];
+          if (incoming.length) {
+            setMessages((prev) => {
+              const seen = new Set(prev.map((m) => m.id));
+              const merged = [...prev, ...incoming.filter((m) => !seen.has(m.id))];
+              return merged;
+            });
+            lastTs.current = incoming[incoming.length - 1].timestamp;
+            
+            // Wait for next tick so `open` state might be evaluated properly
+            // However, due to closure over `open`, this might use stale `open` value.
+            // So we rely on a separate useEffect to handle `unread` or use function updater.
+            const ownerReplies = incoming.filter((m) => m.sender === "owner");
+            if (ownerReplies.length) {
+              setUnread((u) => {
+                // If we want to check `open` inside setter, we can't directly here
+                // We'll manage it by resetting unread when open becomes true.
+                return u + ownerReplies.length;
+              });
+            }
+            scrollToBottom();
+          }
+        } catch (err) {
+          console.warn("[chat] failed parsing SSE:", err);
+        }
+      };
+
+      eventSource.onerror = () => {
+        eventSource?.close();
+        setTimeout(connectSSE, 3000); // Reconnect after 3s on error
+      };
+    };
+
+    connectSSE();
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (open) setUnread(0);

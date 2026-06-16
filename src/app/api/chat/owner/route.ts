@@ -39,8 +39,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    await prisma.chatMessage.create({
-      data: { sessionId: session.id, sender: "USER", message, status: "SENT" },
+    const msg = await prisma.chatMessage.create({
+      data: { sessionId: session.id, sender: "USER", message, status: "QUEUED" },
     });
     await prisma.chatSession.update({
       where: { id: session.id },
@@ -49,7 +49,12 @@ export async function POST(req: NextRequest) {
 
     const delivered = await forwardUserChat({ userId, message });
 
-    if (!delivered && isTelegramConfigured()) {
+    if (delivered) {
+      await prisma.chatMessage.update({
+        where: { id: msg.id },
+        data: { status: "SENT" },
+      });
+    } else if (isTelegramConfigured()) {
       console.warn("[chat/owner] Telegram configured but message delivery failed for user:", userId);
     }
 

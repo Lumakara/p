@@ -32,6 +32,22 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    // Anti review-bombing: verifikasi pembelian
+    const hasPurchased = await prisma.order.findFirst({
+      where: {
+        userId,
+        productId: id,
+        status: "PAID",
+      },
+    });
+
+    if (!hasPurchased) {
+      return NextResponse.json(
+        { error: "Anda harus membeli produk ini sebelum memberikan ulasan." },
+        { status: 403 }
+      );
+    }
+
     const user = await currentUser();
     const userName =
       [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||

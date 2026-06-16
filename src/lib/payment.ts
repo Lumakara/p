@@ -42,6 +42,8 @@ export interface DepositStatusResult {
   paidAt?: string;
 }
 
+import { safeJson } from "./fetch";
+
 interface DepositCreateEnvelope {
   success?: boolean;
   message?: string;
@@ -68,17 +70,6 @@ interface BalanceEnvelope {
   success?: boolean;
   message?: string;
   data?: { balance?: number; username?: string; email?: string };
-}
-
-async function safeJson<T = unknown>(res: Response): Promise<T> {
-  const text = await res.text();
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    throw new Error(
-      `Payment gateway returned non-JSON response (status ${res.status}): ${text.slice(0, 200)}`,
-    );
-  }
 }
 
 /** Create a QRIS deposit. `amount` is the base amount in Rupiah. */

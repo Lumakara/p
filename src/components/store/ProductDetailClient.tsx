@@ -152,9 +152,20 @@ export function ProductDetailClient({
 
           <TurnstileWidget onVerify={setCaptcha} />
 
+          {product.stock != null && (
+            <div className="text-sm font-medium pt-2">
+              Stok Tersedia: <span className={(product.stock ?? 0) <= 5 ? "text-red-500 font-bold" : ""}>{product.stock}</span>
+              {product.stock === 0 && <span className="ml-2 text-red-500">(Habis)</span>}
+            </div>
+          )}
+
           <div className="flex gap-2 pt-2">
-            {isSignedIn ? (
-              <Button className="flex-1" onClick={handleBuy} disabled={buying}>
+            {product.stock === 0 ? (
+              <Button className="flex-1" disabled variant="secondary">
+                Stok Habis
+              </Button>
+            ) : isSignedIn ? (
+              <Button className="flex-1" onClick={handleBuy} disabled={buying || product.stock === 0}>
                 {buying ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-1" />
                 ) : null}
@@ -168,7 +179,9 @@ export function ProductDetailClient({
             <Button
               variant="outline"
               size="icon"
+              disabled={product.stock === 0}
               onClick={() => {
+                if (product.stock === 0) return;
                 addToCart(product, tierName);
                 toast.success("Ditambahkan ke keranjang");
               }}

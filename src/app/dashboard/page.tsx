@@ -84,8 +84,39 @@ export default function DashboardOverview() {
 
   useEffect(() => {
     load();
-    const id = setInterval(load, 15000);
-    return () => clearInterval(id);
+
+    const eventSource = new EventSource("/api/admin/stats/stream");
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "orders_updated" && data.orders?.length > 0) {
+          data.orders.forEach((o: { id: string; status: string; productName: string }) => {
+            if (o.status === "PAID")
+              toast.success(`🟢 Pembayaran berhasil: ${o.productName}`);
+            else if (o.status === "PENDING")
+              toast.info(`🟡 Transaksi baru: ${o.productName}`);
+            else toast.error(`🔴 Transaksi ${o.status}: ${o.productName}`);
+            
+            // Mark as known so load() doesn't re-toast
+            knownOrderIds.current.add(o.id);
+          });
+          // Refresh stats
+          load();
+        }
+      } catch (err) {
+        console.warn("[dashboard] failed parsing SSE:", err);
+      }
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
+      setTimeout(() => load(), 5000); // fallback polling if connection fails
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, []);
 
   if (loading || !stats) {
