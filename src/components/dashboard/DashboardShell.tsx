@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { UserButton } from "@clerk/nextjs";
 import {
   LayoutDashboard,
   Package,
@@ -112,7 +111,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <Sun className="h-4 w-4 dark:hidden" />
               <Moon className="h-4 w-4 hidden dark:block" />
             </Button>
-            <UserButton afterSignOutUrl="/" />
           </div>
         </header>
         <main className="flex-1 p-4 lg:p-6 overflow-auto">{children}</main>

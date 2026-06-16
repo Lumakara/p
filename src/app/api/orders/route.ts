@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getSessionId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -8,10 +8,7 @@ export const dynamic = "force-dynamic";
 /** GET /api/orders — current user's order history. */
 export async function GET() {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getSessionId();
     const orders = await prisma.order.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },

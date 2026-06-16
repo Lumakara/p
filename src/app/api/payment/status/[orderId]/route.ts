@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getSessionId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getDepositStatus, generateProductKey } from "@/lib/payment";
 import { notifyPaidOrder, notifyFailedOrder } from "@/lib/telegram";
@@ -18,10 +18,7 @@ export async function GET(
 ) {
   try {
     const { orderId } = await params;
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getSessionId();
 
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) {

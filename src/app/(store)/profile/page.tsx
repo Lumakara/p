@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser, SignedIn, SignedOut, SignInButton, SignOutButton } from "@clerk/nextjs";
+
 import { useTheme } from "next-themes";
 import { Moon, Sun, Music, Globe, Palette, LogOut, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -19,7 +19,7 @@ const COLORS: { id: ThemeColor; label: string; className: string }[] = [
 ];
 
 export default function ProfilePage() {
-  const { user } = useUser();
+  const user = null;
   const { theme, setTheme } = useTheme();
   const themeColor = useAppStore((s) => s.themeColor);
   const setThemeColor = useAppStore((s) => s.setThemeColor);
@@ -32,26 +32,7 @@ export default function ProfilePage() {
     <div className="space-y-4 max-w-lg mx-auto">
       <h1 className="text-xl font-bold">Profil & Pengaturan</h1>
 
-      <SignedIn>
-        <Card className="p-4 flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={user?.imageUrl} alt="avatar" className="h-12 w-12 rounded-full" />
-          <div>
-            <p className="font-semibold">{user?.fullName || user?.username}</p>
-            <p className="text-sm text-muted-foreground">
-              {user?.primaryEmailAddress?.emailAddress}
-            </p>
-          </div>
-        </Card>
-      </SignedIn>
-      <SignedOut>
-        <Card className="p-4 text-center space-y-2">
-          <p className="text-sm text-muted-foreground">Masuk untuk melihat riwayat & profil.</p>
-          <SignInButton mode="modal">
-            <Button className="w-full">Masuk / Daftar</Button>
-          </SignInButton>
-        </Card>
-      </SignedOut>
+
 
       {/* Appearance */}
       <Card className="p-4 space-y-4">
@@ -112,25 +93,18 @@ export default function ProfilePage() {
         </div>
       </Card>
 
-      <SignedIn>
-        <div className="space-y-2">
-          <Link href="/orders">
-            <Button variant="outline" className="w-full justify-start">
-              Riwayat Transaksi
-            </Button>
-          </Link>
-          <Link href="/dashboard">
-            <Button variant="outline" className="w-full justify-start">
-              <ShieldCheck className="h-4 w-4 mr-2" /> Dashboard Admin
-            </Button>
-          </Link>
-          <SignOutButton>
-            <Button variant="ghost" className="w-full justify-start text-red-500">
-              <LogOut className="h-4 w-4 mr-2" /> Keluar
-            </Button>
-          </SignOutButton>
-        </div>
-      </SignedIn>
+      <div className="space-y-2">
+        <Link href="/orders">
+          <Button variant="outline" className="w-full justify-start">
+            Riwayat Transaksi
+          </Button>
+        </Link>
+        <Link href="/dashboard">
+          <Button variant="outline" className="w-full justify-start">
+            <ShieldCheck className="h-4 w-4 mr-2" /> Dashboard Admin
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }

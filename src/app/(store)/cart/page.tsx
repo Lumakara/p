@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useUser, SignInButton } from "@clerk/nextjs";
 import { Trash2, Minus, Plus, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,7 +13,6 @@ import { rupiah } from "@/lib/format";
 
 export default function CartPage() {
   const router = useRouter();
-  const { isSignedIn } = useUser();
   const cart = useAppStore((s) => s.cart);
   const removeFromCart = useAppStore((s) => s.removeFromCart);
   const updateQuantity = useAppStore((s) => s.updateQuantity);
@@ -104,16 +102,10 @@ export default function CartPage() {
           <span className="text-sm text-muted-foreground">{count} item dipilih</span>
           <span className="text-lg font-bold">{rupiah(subtotal)}</span>
         </div>
-        {isSignedIn ? (
-          <Button className="w-full" onClick={checkout} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-            Bayar Sekarang
-          </Button>
-        ) : (
-          <SignInButton mode="modal">
-            <Button className="w-full">Masuk untuk Bayar</Button>
-          </SignInButton>
-        )}
+        <Button className="w-full" onClick={checkout} disabled={loading}>
+          {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+          Bayar Sekarang
+        </Button>
       </Card>
     </div>
   );

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
+
 import { prisma } from "@/lib/prisma";
 import { createDeposit, generateOrderId } from "@/lib/payment";
 import { notifyNewOrder } from "@/lib/telegram";
 import { verifyTurnstile } from "@/lib/turnstile";
-import { syncCurrentUser } from "@/lib/auth";
+import { syncCurrentUser, getSessionId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,10 +16,7 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getSessionId();
 
     const body = await req.json().catch(() => ({}));
     const { productId, tier, turnstileToken } = body as {
@@ -80,16 +77,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Make sure the user exists in our DB (best-effort).
-    await syncCurrentUser().catch((err) => {
-      console.warn("[payment/create] syncCurrentUser failed:", err);
-    });
-    const user = await currentUser();
-    const customerName =
-      [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
-      user?.username ||
-      "Customer";
-    const customerEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+    const customerName = "Customer";
+    const customerEmail = null;
 
     const orderId = generateOrderId();
 

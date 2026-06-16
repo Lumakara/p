@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser, SignInButton } from "@clerk/nextjs";
 import { Star, Check, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,7 +21,7 @@ export function ProductDetailClient({
   initialReviews: Review[];
 }) {
   const router = useRouter();
-  const { isSignedIn } = useUser();
+  const ensureChatUserId = useAppStore((s) => s.ensureChatUserId);
   const addToCart = useAppStore((s) => s.addToCart);
   const tiers = product.tiers || [];
   const [tierName, setTierName] = useState(tiers[0]?.name);
@@ -38,10 +37,7 @@ export function ProductDetailClient({
   const price = selectedTier?.price ?? product.discountPrice ?? product.basePrice;
 
   async function handleBuy() {
-    if (!isSignedIn) {
-      toast.error("Silakan masuk untuk membeli");
-      return;
-    }
+    const userId = ensureChatUserId();
     setBuying(true);
     try {
       const res = await fetch("/api/payment/create", {
@@ -64,10 +60,7 @@ export function ProductDetailClient({
   }
 
   async function submitReview() {
-    if (!isSignedIn) {
-      toast.error("Masuk untuk menulis ulasan");
-      return;
-    }
+    const userId = ensureChatUserId();
     if (!comment.trim()) return;
     setSubmitting(true);
     try {
@@ -164,17 +157,13 @@ export function ProductDetailClient({
               <Button className="flex-1" disabled variant="secondary">
                 Stok Habis
               </Button>
-            ) : isSignedIn ? (
+            ) : (
               <Button className="flex-1" onClick={handleBuy} disabled={buying || product.stock === 0}>
                 {buying ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-1" />
                 ) : null}
                 Beli Sekarang · {rupiah(price)}
               </Button>
-            ) : (
-              <SignInButton mode="modal">
-                <Button className="flex-1">Masuk untuk Beli</Button>
-              </SignInButton>
             )}
             <Button
               variant="outline"
