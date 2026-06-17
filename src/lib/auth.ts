@@ -2,13 +2,15 @@ import { prisma } from "@/lib/prisma";
 import type { Role } from "@prisma/client";
 import { cookies } from "next/headers";
 
+import { adminAuth } from "@/lib/firebase-admin";
+
 /** 
  * Auth helpers (server-side).
- * Replaced Clerk with a simple guest cookie mechanism.
+ * Replaced Clerk with a simple guest cookie mechanism and Firebase Token verification.
  */
 
-function adminIds(): string[] {
-  return (process.env.ADMIN_USER_IDS || "")
+export function adminIds(): string[] {
+  return (process.env.NEXT_ADMIN_USER_IDS || process.env.ADMIN_USER_IDS || "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
@@ -19,21 +21,71 @@ export async function getSessionId(): Promise<string> {
   let sid = cookieStore.get("guest_id")?.value;
   if (!sid) {
     sid = "guest_" + Math.random().toString(36).substring(2, 15);
-    // Note: Can't set cookies in server components easily, so this is just a fallback string
-    // Real implementation should set this cookie in middleware or client.
   }
   return sid;
 }
 
 export async function isAdmin(): Promise<boolean> {
-  // Simple check for now. You might want to implement a real login later.
-  // For demo/setup purposes after removing Clerk, we can just return true if DEV, or rely on a secret.
-  return process.env.NODE_ENV !== "production" || process.env.ADMIN_OPEN === "true";
+  // In development, or if ADMIN_OPEN is explicitly "true", bypass authentication check for ease of testing.
+  if (process.env.NODE_ENV !== "production" || process.env.ADMIN_OPEN === "true") {
+    return true;
+  }
+
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("firebase_token")?.value;
+    if (!token) return false;
+
+    // Verify token using Firebase Admin SDK
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    const uid = decodedToken.uid;
+
+    // 1. Check if UID is explicitly in ADMIN_USER_IDS environment variable
+    if (adminIds().includes(uid)) {
+      return true;
+    }
+
+    // 2. Check if database user is configured as an ADMIN
+    const dbUser = await prisma.user.findUnique({
+      where: { id: uid },
+      select: { role: true },
+    });
+    if (dbUser && dbUser.role === "ADMIN") {
+      return true;
+    }
+
+    return false;
+  } catch (err) {
+    console.error("[auth/isAdmin] failed to check admin status:", err);
+    return false;
+  }
 }
 
 export async function requireAdmin(): Promise<string> {
-  if (!(await isAdmin())) throw new Error("FORBIDDEN");
-  return "admin";
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("firebase_token")?.value;
+    if (token) {
+      const decodedToken = await adminAuth.verifyIdToken(token);
+      const uid = decodedToken.uid;
+      
+      const isUserAdmin = adminIds().includes(uid) || 
+        (await prisma.user.findUnique({ where: { id: uid }, select: { role: true } }))?.role === "ADMIN";
+      
+      if (isUserAdmin || process.env.NODE_ENV !== "production" || process.env.ADMIN_OPEN === "true") {
+        return uid;
+      }
+    }
+  } catch (err) {
+    console.error("[auth/requireAdmin] error verifying admin token:", err);
+  }
+
+  // Fallback for dev/ADMIN_OPEN if token is missing
+  if (process.env.NODE_ENV !== "production" || process.env.ADMIN_OPEN === "true") {
+    return "admin_dev";
+  }
+
+  throw new Error("FORBIDDEN");
 }
 
 export async function syncCurrentUser() {

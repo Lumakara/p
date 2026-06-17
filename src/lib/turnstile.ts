@@ -3,7 +3,7 @@
  * Docs: https://developers.cloudflare.com/turnstile/get-started/server-side-validation/
  */
 
-const SECRET = process.env.CF_TURNSTILE_SECRET || "";
+const SECRET = process.env.CF_TURNSTILE_SECRET || process.env.NEXT_TURNSTILE_SECRET || "";
 const VERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 

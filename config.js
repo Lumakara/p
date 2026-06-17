@@ -17,12 +17,15 @@ NEXT_TELEGRAM_CHAT_ID=6879771598
 
 # **Cloudinary**:
 NEXT_CLOUDINARY_CLOUD_NAME=dhhdxaejc
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dhhdxaejc
 NEXT_CLOUDINARY_API_KEY=248436966115375
 NEXT_CLOUDINARY_API_SECRET=n6zBUPVT5IuMZE-qcpqnj6oLefY
 NEXT_CLOUDINARY_UPLOAD_PRESET=ecommerce_upload
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=ecommerce_upload
 
 # **Cloudflare Turnstile**:
 NEXT_TURNSTILE_SITE_KEY=0x4AAAAAADlTx_RrOXQL9XZc
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAAAAADlTx_RrOXQL9XZc
 NEXT_TURNSTILE_SECRET=0x4AAAAAADlTx19ShKhERLghgVpcTFITILI
 
 # ---- App ----
@@ -56,7 +59,7 @@ NEXT_FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0B
 
 # DATABASE CONFIGURATION
 NEXT_DATABASE_URL=postgresql://neondb_owner:npg_Rs3pU1GTXWxK@ep-young-heart-aojtnjx5-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-NEXT_IRECT_URL=postgresql://neondb_owner:npg_Rs3pU1GTXWxK@ep-young-heart-aojtnjx5.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+NEXT_DIRECT_URL=postgresql://neondb_owner:npg_Rs3pU1GTXWxK@ep-young-heart-aojtnjx5.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 
 # AUTH UID ADMIN FIREBASE
 NEXT_ADMIN_USER_IDS=PyDKZDKnQPcOc1q0C2FrGIO7sP32

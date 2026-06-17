@@ -12,8 +12,8 @@
 import { randomInt, randomBytes } from "crypto";
 
 const BASE_URL =
-  process.env.PAYMENT_BASE_URL || "https://ramashop.my.id/api/public";
-const API_KEY = process.env.PAYMENT_API_KEY || "";
+  process.env.PAYMENT_BASE_URL || process.env.NEXT_PAYMENT_BASE_URL || "https://ramashop.my.id/api/public";
+const API_KEY = process.env.PAYMENT_API_KEY || process.env.NEXT_PAYMENT_API_KEY || "";
 
 function headers(json = false): HeadersInit {
   const h: Record<string, string> = { "X-API-Key": API_KEY };

@@ -9,10 +9,10 @@
  * contact the owner directly.
  */
 
-const BASE_URL = process.env.CHATBOT_BASE_URL || "https://api.neoxr.eu/api";
-const API_KEY = process.env.CHATBOT_API_KEY || "";
-const V1 = process.env.CHATBOT_V1_ENDPOINT || "kimi";
-const V2 = process.env.CHATBOT_V2_ENDPOINT || "gpt4";
+const BASE_URL = process.env.CHATBOT_BASE_URL || process.env.NEXT_CHATBOT_BASE_URL || "https://api.neoxr.eu/api";
+const API_KEY = process.env.CHATBOT_API_KEY || process.env.NEXT_CHATBOT_API_KEY || "";
+const V1 = process.env.CHATBOT_V1_ENDPOINT || process.env.NEXT_CHATBOT_V1_ENDPOINT || "kimi";
+const V2 = process.env.CHATBOT_V2_ENDPOINT || process.env.NEXT_CHATBOT_V2_ENDPOINT || "gpt4";
 const TIMEOUT_MS = 5000;
 
 export const FALLBACK_MESSAGE =
@@ -54,8 +54,19 @@ async function callEndpoint(
 ): Promise<string | null> {
   if (!API_KEY) throw new Error("CHATBOT_API_KEY is not configured");
 
-  const params = new URLSearchParams({ q: message, apikey: API_KEY });
+  const params = new URLSearchParams();
+  params.set("apikey", API_KEY);
   if (sessionId) params.set("session", sessionId);
+
+  // Determine query parameters based on endpoint type:
+  // - gpt4: needs "q"
+  // - kimi: needs "prompt" and "model"
+  if (endpoint === "kimi") {
+    params.set("prompt", message);
+    params.set("model", "kimi"); // Default model parameter for Kimi endpoint
+  } else {
+    params.set("q", message);
+  }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);

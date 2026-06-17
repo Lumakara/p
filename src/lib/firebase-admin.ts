@@ -3,20 +3,21 @@ import { getAuth } from "firebase-admin/auth";
 
 let adminAuth: ReturnType<typeof getAuth>;
 
-const hasAdminCredentials =
-  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
-  process.env.FIREBASE_CLIENT_EMAIL &&
-  process.env.FIREBASE_PRIVATE_KEY;
+const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.NEXT_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
+const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || process.env.NEXT_FIREBASE_CLIENT_EMAIL;
+const privateKey = process.env.FIREBASE_PRIVATE_KEY || process.env.NEXT_FIREBASE_PRIVATE_KEY;
+
+const hasAdminCredentials = projectId && clientEmail && privateKey;
 
 if (hasAdminCredentials) {
   if (!getApps().length) {
     try {
       initializeApp({
         credential: cert({
-          projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          projectId,
+          clientEmail,
           // Replace escaped newlines
-          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+          privateKey: privateKey?.replace(/\\n/g, "\n"),
         }),
       });
     } catch (error) {

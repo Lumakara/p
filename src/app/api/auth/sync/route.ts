@@ -28,12 +28,17 @@ export async function POST(req: NextRequest) {
     };
     const provider = providerMap[providerId] || providerId;
 
+    const { adminIds } = require("@/lib/auth");
+    const adminList = adminIds();
+    const role = adminList.includes(uid) ? "ADMIN" : "USER";
+
     const user = await prisma.user.upsert({
       where: { id: uid },
       update: {
         email: email ?? undefined,
         name: name ?? undefined,
         avatar: picture ?? undefined,
+        role, // Update role during sync if it changes
       },
       create: {
         id: uid,
@@ -41,7 +46,7 @@ export async function POST(req: NextRequest) {
         name,
         avatar: picture,
         provider,
-        role: "USER",
+        role,
       },
     });
 

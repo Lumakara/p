@@ -22,7 +22,7 @@ export function TurnstileWidget({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
-  const siteKey = process.env.NEXT_TURNSTILE_SITE_KEY;
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY || process.env.NEXT_TURNSTILE_SITE_KEY;
 
   useEffect(() => {
     if (!siteKey) return;

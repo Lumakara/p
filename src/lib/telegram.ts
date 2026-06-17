@@ -8,8 +8,8 @@
  * or by replying directly to the forwarded message.
  */
 
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.NEXT_TELEGRAM_BOT_TOKEN || "";
+const CHAT_ID = process.env.TELEGRAM_CHAT_ID || process.env.NEXT_TELEGRAM_CHAT_ID || "";
 
 const API = (method: string) => `https://api.telegram.org/bot${TOKEN}/${method}`;
 
