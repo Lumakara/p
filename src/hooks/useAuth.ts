@@ -11,7 +11,7 @@ import {
   updateProfile,
   User,
 } from "firebase/auth";
-import { auth, googleProvider, githubProvider } from "@/lib/firebase";
+import { auth, googleProvider, githubProvider } from "@/config/firebase";
 import { toast } from "sonner";
 
 export function useAuth() {

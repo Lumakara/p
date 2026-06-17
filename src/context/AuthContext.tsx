@@ -12,7 +12,7 @@ import {
   updateProfile,
   IdTokenResult,
 } from "firebase/auth";
-import { auth, googleProvider, githubProvider } from "@/lib/firebase";
+import { auth, googleProvider, githubProvider } from "@/config/firebase";
 
 // Firebase error helper in Indonesian
 export function getFirebaseErrorMessage(errorCode: string): string {

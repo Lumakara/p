@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { TurnstileWidget } from "@/components/TurnstileWidget";
+import { TurnstileWidget } from "@/components/common/TurnstileWidget";
 
 export default function SupportPage() {
   const [form, setForm] = useState({

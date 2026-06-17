@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { notifySupportTicket } from "@/lib/telegram";
-import { verifyTurnstile } from "@/lib/turnstile";
+import { notifySupportTicket } from "@/integrations/telegram";
+import { verifyTurnstile } from "@/integrations/turnstile";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

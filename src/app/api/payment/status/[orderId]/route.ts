@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionId } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { getDepositStatus, generateProductKey } from "@/lib/payment";
-import { notifyPaidOrder, notifyFailedOrder } from "@/lib/telegram";
+import { prisma } from "@/db/client";
+import { getDepositStatus, generateProductKey } from "@/integrations/payment";
+import { notifyPaidOrder, notifyFailedOrder } from "@/integrations/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

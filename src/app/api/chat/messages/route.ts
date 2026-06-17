@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { processChatBackgroundJobs } from "@/lib/chat-jobs";
+import { prisma } from "@/db/client";
+import { processChatBackgroundJobs } from "@/services/chatJobs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

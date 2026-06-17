@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma";
-import { forwardUserChat } from "@/lib/telegram";
+import { prisma } from "@/db/client";
+import { forwardUserChat } from "@/integrations/telegram";
 
 /**
  * Processes background tasks for chat:

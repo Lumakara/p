@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { withAdmin } from "@/lib/api";
-import { getBalance } from "@/lib/payment";
-import { isTelegramConfigured } from "@/lib/telegram";
+import { prisma } from "@/db/client";
+import { withAdmin } from "@/lib/api-middleware";
+import { getBalance } from "@/integrations/payment";
+import { isTelegramConfigured } from "@/integrations/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

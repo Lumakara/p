@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { askAi } from "@/lib/chat";
+import { prisma } from "@/db/client";
+import { askAi } from "@/services/chat";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

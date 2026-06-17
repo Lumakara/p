@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/db/client";
 import type { Product } from "@/types";
 
 /** Server-side product fetch. Returns [] if the DB is unavailable. */

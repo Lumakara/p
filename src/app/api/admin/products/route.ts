@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { withAdmin } from "@/lib/api";
+import { prisma } from "@/db/client";
+import { withAdmin } from "@/lib/api-middleware";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

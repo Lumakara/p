@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useAppStore } from "@/store/appStore";
 import { rupiah, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { TurnstileWidget } from "@/components/TurnstileWidget";
+import { TurnstileWidget } from "@/components/common/TurnstileWidget";
 import type { Product, Review } from "@/types";
 
 export function ProductDetailClient({

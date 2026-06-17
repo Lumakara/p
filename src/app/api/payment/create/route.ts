@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { prisma } from "@/lib/prisma";
-import { createDeposit, generateOrderId } from "@/lib/payment";
-import { notifyNewOrder } from "@/lib/telegram";
-import { verifyTurnstile } from "@/lib/turnstile";
+import { prisma } from "@/db/client";
+import { createDeposit, generateOrderId } from "@/integrations/payment";
+import { notifyNewOrder } from "@/integrations/telegram";
+import { verifyTurnstile } from "@/integrations/turnstile";
 import { syncCurrentUser, getSessionId } from "@/lib/auth";
 
 export const runtime = "nodejs";

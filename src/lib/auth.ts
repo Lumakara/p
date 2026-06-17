@@ -1,8 +1,8 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/db/client";
 import type { Role } from "@prisma/client";
 import { cookies } from "next/headers";
 
-import { adminAuth } from "@/lib/firebase-admin";
+import { adminAuth } from "@/config/firebase-admin";
 
 /** 
  * Auth helpers (server-side).

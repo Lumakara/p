@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/db/client";
 
 /** Wraps an admin handler with auth + error handling + audit logging. */
 export async function withAdmin<T>(

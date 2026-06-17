@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/db/client";
 import { requireAdmin } from "@/lib/auth";
 
 export const runtime = "nodejs";

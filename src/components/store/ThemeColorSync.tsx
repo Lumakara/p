@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useAppStore } from "@/store/appStore";
-import { ultraAudio } from "@/lib/audio";
+import { ultraAudio } from "@/services/audio";
 
 const THEME_COLORS: Record<string, { primary: string; ring: string }> = {
   // HSL values matching globals.css --primary

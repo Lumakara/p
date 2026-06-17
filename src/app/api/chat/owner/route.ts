@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { forwardUserChat, isTelegramConfigured } from "@/lib/telegram";
+import { prisma } from "@/db/client";
+import { forwardUserChat, isTelegramConfigured } from "@/integrations/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

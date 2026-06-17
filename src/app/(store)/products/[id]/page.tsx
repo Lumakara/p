@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getProduct } from "@/lib/data";
+import { getProduct } from "@/db/queries";
 import { ProductDetailClient } from "@/components/store/ProductDetailClient";
 import type { Product, Review } from "@/types";
 

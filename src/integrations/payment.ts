@@ -42,7 +42,7 @@ export interface DepositStatusResult {
   paidAt?: string;
 }
 
-import { safeJson } from "./fetch";
+import { safeJson } from "@/lib/fetch";
 
 interface DepositCreateEnvelope {
   success?: boolean;

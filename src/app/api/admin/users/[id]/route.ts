@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { withAdmin } from "@/lib/api";
+import { prisma } from "@/db/client";
+import { withAdmin } from "@/lib/api-middleware";
 import type { UserStatus } from "@prisma/client";
 
 export const runtime = "nodejs";

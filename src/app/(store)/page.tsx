@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getProducts } from "@/lib/data";
+import { getProducts } from "@/db/queries";
 import { ProductCard } from "@/components/store/ProductCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, ShieldCheck, Zap } from "lucide-react";

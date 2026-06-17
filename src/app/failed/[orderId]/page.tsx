@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { XCircle } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/db/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 

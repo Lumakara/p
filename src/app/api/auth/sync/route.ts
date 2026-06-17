@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth } from "@/lib/firebase-admin";
-import { prisma } from "@/lib/prisma";
+import { adminAuth } from "@/config/firebase-admin";
+import { prisma } from "@/db/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

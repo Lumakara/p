@@ -1,5 +1,5 @@
-import { withAdmin } from "@/lib/api";
-import { sendTelegramMessage, isTelegramConfigured } from "@/lib/telegram";
+import { withAdmin } from "@/lib/api-middleware";
+import { sendTelegramMessage, isTelegramConfigured } from "@/integrations/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

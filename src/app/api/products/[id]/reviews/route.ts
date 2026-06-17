@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionId } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/db/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

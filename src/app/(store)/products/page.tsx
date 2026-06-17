@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getProducts, getCategories } from "@/lib/data";
+import { getProducts, getCategories } from "@/db/queries";
 import { ProductCard } from "@/components/store/ProductCard";
 import { cn } from "@/lib/utils";
 
