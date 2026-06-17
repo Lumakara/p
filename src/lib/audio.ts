@@ -241,7 +241,11 @@ class UltraAudioService {
         const data = JSON.parse(store);
         return data.state?.soundEnabled !== false;
       }
-    } catch {}
+    } catch (error) {
+      // localStorage might be corrupted or unavailable (e.g., private browsing)
+      // Default to sound enabled in production for better UX
+      console.warn('[Audio] Failed to read sound preference from localStorage:', error);
+    }
     return true;
   }
 
@@ -253,7 +257,11 @@ class UltraAudioService {
         const data = JSON.parse(store);
         return data.state?.musicEnabled === true;
       }
-    } catch {}
+    } catch (error) {
+      // localStorage might be corrupted or unavailable
+      // Default to music disabled (opt-in feature)
+      console.warn('[Audio] Failed to read music preference from localStorage:', error);
+    }
     return false;
   }
 }
