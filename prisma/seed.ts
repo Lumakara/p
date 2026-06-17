@@ -162,8 +162,8 @@ async function main() {
     create: {
       key: "site",
       value: {
-        name: "Digital Store",
-        description: "Toko produk digital terpercaya",
+        name: "LumakaraStore",
+        description: "Layanan  mudah dan lengkap",
         logo: "",
         themeColor: "#f97316",
         paymentExpiryMinutes: 15,
