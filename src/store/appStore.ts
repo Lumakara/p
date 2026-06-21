@@ -21,6 +21,12 @@ interface AppState {
   toggleFavorite: (id: string) => void;
   isFavorite: (id: string) => boolean;
 
+  // Recently viewed
+  recentlyViewed: string[];
+  addToRecentlyViewed: (id: string) => void;
+  clearRecentlyViewed: () => void;
+  clearFavorites: () => void;
+
   // Theme color scheme (dark/light handled by next-themes)
   themeColor: ThemeColor;
   setThemeColor: (t: ThemeColor) => void;
@@ -120,6 +126,14 @@ export const useAppStore = create<AppState>()(
       },
       isFavorite: (id) => get().favorites.includes(id),
 
+      recentlyViewed: [],
+      addToRecentlyViewed: (id) => {
+        const prev = get().recentlyViewed.filter((i) => i !== id);
+        set({ recentlyViewed: [id, ...prev].slice(0, 10) });
+      },
+      clearRecentlyViewed: () => set({ recentlyViewed: [] }),
+      clearFavorites: () => set({ favorites: [] }),
+
       themeColor: "default",
       setThemeColor: (t) => set({ themeColor: t }),
 
@@ -146,6 +160,7 @@ export const useAppStore = create<AppState>()(
       partialize: (s) => ({
         cart: s.cart,
         favorites: s.favorites,
+        recentlyViewed: s.recentlyViewed,
         themeColor: s.themeColor,
         soundEnabled: s.soundEnabled,
         musicEnabled: s.musicEnabled,

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getProduct } from "@/db/queries";
 import { ProductDetailClient } from "@/components/store/ProductDetailClient";
-import type { Product, Review } from "@/types";
+import type { Product } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -14,14 +14,8 @@ export default async function ProductDetailPage({
   const product = await getProduct(id);
   if (!product) notFound();
 
-  const reviews = (product.reviews as Review[]) || [];
   const { reviews: _omit, ...productData } = product;
   void _omit;
 
-  return (
-    <ProductDetailClient
-      product={productData as Product}
-      initialReviews={reviews}
-    />
-  );
+  return <ProductDetailClient product={productData as Product} />;
 }

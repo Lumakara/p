@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Star, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAppStore } from "@/store/appStore";
@@ -53,10 +53,6 @@ export function ProductCard({ product }: { product: Product }) {
           </p>
           <div className="flex items-center justify-between pt-1">
             <span className="font-bold text-primary text-sm">{rupiah(price)}</span>
-            <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-              {product.rating.toFixed(1)} ({product.reviewsCount})
-            </span>
           </div>
         </div>
       </Link>

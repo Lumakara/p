@@ -35,10 +35,7 @@ export async function getProduct(
   id: string,
 ): Promise<(Product & { reviews?: unknown[] }) | null> {
   try {
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: { reviews: { orderBy: { createdAt: "desc" }, take: 50 } },
-    });
+    const product = await prisma.product.findUnique({ where: { id } });
     return product as unknown as Product & { reviews?: unknown[] };
   } catch (err) {
     console.error("[data] getProduct failed:", err);

@@ -10,10 +10,12 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const category = url.searchParams.get("category");
     const q = url.searchParams.get("q");
+    const ids = url.searchParams.get("ids");
 
     const products = await prisma.product.findMany({
       where: {
         active: true,
+        ...(ids ? { id: { in: ids.split(",").filter(Boolean) } } : {}),
         ...(category && category !== "all" ? { category } : {}),
         ...(q
           ? {
