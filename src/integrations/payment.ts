@@ -34,7 +34,7 @@ export interface CreateDepositResult {
   message?: string;
 }
 
-export type RamaStatus = "pending" | "success" | "already";
+export type RamaStatus = "pending" | "success" | "already" | "expired" | "failed";
 
 export interface DepositStatusResult {
   status: RamaStatus;
@@ -62,8 +62,9 @@ interface DepositCreateEnvelope {
 
 interface DepositStatusEnvelope {
   status?: boolean;
+  success?: boolean;
   message?: string;
-  data?: { status?: string; paidAmount?: number; paidAt?: string };
+  data?: { status?: string; paidAmount?: number; paidAt?: string; depositId?: string };
 }
 
 interface BalanceEnvelope {
@@ -123,7 +124,8 @@ export async function getDepositStatus(
   });
 
   const body = await safeJson<DepositStatusEnvelope>(res);
-  if (!res.ok || body?.status !== true) {
+  const isOk = body?.status === true || body?.success === true;
+  if (!res.ok || !isOk) {
     throw new Error(
       body?.message || `Failed to fetch deposit status (status ${res.status})`,
     );

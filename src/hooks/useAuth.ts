@@ -9,7 +9,6 @@ import {
   sendPasswordResetEmail,
   signOut as firebaseSignOut,
   updateProfile,
-  User,
 } from "firebase/auth";
 import { auth, googleProvider, githubProvider } from "@/config/firebase";
 import { toast } from "sonner";
@@ -89,7 +88,6 @@ export function useAuth() {
   const loginWithGitHub = async () => {
     setAuthLoading(true);
     try {
-      githubProvider.setCustomParameters({ prompt: "select_account" });
       const userCredential = await signInWithPopup(auth, githubProvider);
       await syncUser(userCredential.user);
       toast.success("Login dengan GitHub berhasil!");

@@ -76,6 +76,29 @@ export async function GET(
 
     const remote = await getDepositStatus(order.transactionId);
 
+    // RamaShop can also mark deposits as expired before our local timer fires.
+    if (remote.status === "expired" || remote.status === "failed") {
+      const updated = await prisma.order.update({
+        where: { id: order.id },
+        data: { status: "EXPIRED" },
+      });
+      notifyFailedOrder({
+        orderId: updated.id,
+        productName: updated.productName,
+        amount: updated.amount,
+        customer: updated.customerName || "Customer",
+        reason: "Ditolak oleh payment gateway",
+      }).catch((err) => {
+        console.warn("[payment/status] notifyFailedOrder failed:", err);
+      });
+      return NextResponse.json({
+        orderId: updated.id,
+        status: "EXPIRED",
+        reason: "Waktu pembayaran habis",
+        canRetry: true,
+      });
+    }
+
     if (remote.status === "success" || remote.status === "already") {
       // Validate the amount paid (must not be less than expected total).
       const expected = order.totalAmount ?? order.amount;

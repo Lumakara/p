@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth } from "@/config/firebase-admin";
 import { prisma } from "@/db/client";
+import { adminIds } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +29,6 @@ export async function POST(req: NextRequest) {
     };
     const provider = providerMap[providerId] || providerId;
 
-    const { adminIds } = require("@/lib/auth");
     const adminList = adminIds();
     const role = adminList.includes(uid) ? "ADMIN" : "USER";
 

@@ -4,9 +4,9 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
-      { protocol: "https", hostname: "img.clerk.com" },
       { protocol: "https", hostname: "api.qrserver.com" },
       { protocol: "https", hostname: "ramashop.my.id" },
+      { protocol: "https", hostname: "larabert-qrgen.hf.space" },
       { protocol: "https", hostname: "cdn.neoxr.eu" },
       { protocol: "https", hostname: "ui-avatars.com" },
     ],

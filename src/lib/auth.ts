@@ -1,5 +1,4 @@
 import { prisma } from "@/db/client";
-import type { Role } from "@prisma/client";
 import { cookies } from "next/headers";
 
 import { adminAuth } from "@/config/firebase-admin";
@@ -18,11 +17,20 @@ export function adminIds(): string[] {
 
 export async function getSessionId(): Promise<string> {
   const cookieStore = await cookies();
-  let sid = cookieStore.get("guest_id")?.value;
-  if (!sid) {
-    sid = "guest_" + Math.random().toString(36).substring(2, 15);
+
+  // Prefer the authenticated Firebase uid when available.
+  const firebaseToken = cookieStore.get("firebase_token")?.value;
+  if (firebaseToken) {
+    try {
+      const decoded = await adminAuth.verifyIdToken(firebaseToken);
+      return decoded.uid;
+    } catch {
+      // Token invalid/expired — fall through to guest id.
+    }
   }
-  return sid;
+
+  const sid = cookieStore.get("guest_id")?.value;
+  return sid || "guest_anon";
 }
 
 export async function isAdmin(): Promise<boolean> {

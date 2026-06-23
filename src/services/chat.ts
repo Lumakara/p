@@ -1,18 +1,24 @@
 /**
  * NeoXR AI chat client (server-side only) with automatic v1 -> v2 fallback.
  *
- *   AI v1 (Kimi K2):  GET https://api.neoxr.eu/api/kimi?q=...&apikey=...
- *   AI v2 (Chat GPT-4): GET https://api.neoxr.eu/api/gpt4?q=...&apikey=...
+ *   AI v1 (GPT-4):  GET https://api.neoxr.eu/api/gpt4?q=...&apikey=...
+ *   AI v2 (Claude): GET https://api.neoxr.eu/api/claude?q=...&apikey=...
  *
- * If v1 times out / returns an error, we automatically retry against v2.
- * If both fail, we return a fallback message instructing the user to
- * contact the owner directly.
+ * If v1 times out / returns an error, retry against v2.
+ * If both fail, return a fallback message.
  */
 
-const BASE_URL = process.env.CHATBOT_BASE_URL || process.env.NEXT_CHATBOT_BASE_URL || "https://api.neoxr.eu/api";
-const API_KEY = process.env.CHATBOT_API_KEY || process.env.NEXT_CHATBOT_API_KEY || "";
-const V1 = process.env.CHATBOT_V1_ENDPOINT || process.env.NEXT_CHATBOT_V1_ENDPOINT || "kimi";
-const V2 = process.env.CHATBOT_V2_ENDPOINT || process.env.NEXT_CHATBOT_V2_ENDPOINT || "gpt4";
+const BASE_URL =
+  process.env.CHATBOT_BASE_URL ||
+  process.env.NEXT_CHATBOT_BASE_URL ||
+  "https://api.neoxr.eu/api";
+const API_KEY =
+  process.env.CHATBOT_API_KEY || process.env.NEXT_CHATBOT_API_KEY || "";
+// V1 = GPT-4 (primary), V2 = Claude (fallback)
+const V1 =
+  process.env.CHATBOT_V1_ENDPOINT || process.env.NEXT_CHATBOT_V1_ENDPOINT || "gpt4";
+const V2 =
+  process.env.CHATBOT_V2_ENDPOINT || process.env.NEXT_CHATBOT_V2_ENDPOINT || "claude";
 const TIMEOUT_MS = 5000;
 
 export const FALLBACK_MESSAGE =
@@ -58,15 +64,7 @@ async function callEndpoint(
   params.set("apikey", API_KEY);
   if (sessionId) params.set("session", sessionId);
 
-  // Determine query parameters based on endpoint type:
-  // - gpt4: needs "q"
-  // - kimi: needs "prompt" and "model"
-  if (endpoint === "kimi") {
-    params.set("prompt", message);
-    params.set("model", "kimi"); // Default model parameter for Kimi endpoint
-  } else {
-    params.set("q", message);
-  }
+  params.set("q", message);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
