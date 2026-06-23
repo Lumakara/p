@@ -7,13 +7,10 @@
  * This module is for server-side signed operations (e.g. deletes).
  */
 
-export const cloudinaryConfig = {
-  cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.NEXT_CLOUDINARY_CLOUD_NAME || "",
-  apiKey: process.env.CLOUDINARY_API_KEY || process.env.NEXT_CLOUDINARY_API_KEY || "",
-  apiSecret: process.env.CLOUDINARY_API_SECRET || process.env.NEXT_CLOUDINARY_API_SECRET || "",
-  uploadPreset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || process.env.NEXT_CLOUDINARY_UPLOAD_PRESET || "",
-};
+import { env } from "./env";
+
+export const cloudinaryConfig = env.cloudinary;
 
 export function isCloudinaryConfigured(): boolean {
-  return Boolean(cloudinaryConfig.cloudName);
+  return env.cloudinary.isConfigured;
 }

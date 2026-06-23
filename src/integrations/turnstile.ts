@@ -3,12 +3,14 @@
  * Docs: https://developers.cloudflare.com/turnstile/get-started/server-side-validation/
  */
 
-const SECRET = process.env.CF_TURNSTILE_SECRET || process.env.NEXT_TURNSTILE_SECRET || "";
+import { env } from "@/config/env";
+
+const SECRET = env.turnstile.secret;
 const VERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
 export function isTurnstileConfigured(): boolean {
-  return Boolean(SECRET);
+  return env.turnstile.isConfigured;
 }
 
 export async function verifyTurnstile(

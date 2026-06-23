@@ -8,13 +8,15 @@
  * or by replying directly to the forwarded message.
  */
 
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.NEXT_TELEGRAM_BOT_TOKEN || "";
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID || process.env.NEXT_TELEGRAM_CHAT_ID || "";
+import { env } from "@/config/env";
+
+const TOKEN = env.telegram.botToken;
+const CHAT_ID = env.telegram.chatId;
 
 const API = (method: string) => `https://api.telegram.org/bot${TOKEN}/${method}`;
 
 export function isTelegramConfigured(): boolean {
-  return Boolean(TOKEN && CHAT_ID);
+  return env.telegram.isConfigured;
 }
 
 export async function sendTelegramMessage(

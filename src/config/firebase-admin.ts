@@ -1,21 +1,17 @@
 import { getApps, initializeApp, cert } from "firebase-admin";
 import { getAuth } from "firebase-admin/auth";
+import { env } from "./env";
 
 let adminAuth: ReturnType<typeof getAuth>;
 
-const hasAdminCredentials =
-  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
-  process.env.NEXT_FIREBASE_CLIENT_EMAIL &&
-  process.env.NEXT_FIREBASE_PRIVATE_KEY;
-
-if (hasAdminCredentials) {
+if (env.firebaseAdmin.isConfigured) {
   if (!getApps().length) {
     try {
       initializeApp({
         credential: cert({
-          projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-          clientEmail: process.env.NEXT_FIREBASE_CLIENT_EMAIL,
-          privateKey: (process.env.NEXT_FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+          projectId: env.firebaseAdmin.projectId,
+          clientEmail: env.firebaseAdmin.clientEmail,
+          privateKey: (env.firebaseAdmin.privateKey || "").replace(/\\n/g, "\n"),
         }),
       });
     } catch (error) {
