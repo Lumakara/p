@@ -58,3 +58,101 @@ Env vars live in `config.js` (not `.env`). DB uses Neon PostgreSQL via `NEXT_DAT
 ## Agent Rules
 
 `.agents/rules/00-system.md`: always use RTK commands (`rtk git`, `rtk ls`, `rtk grep`) instead of bare equivalents. Auto-fix build errors, auto-install missing deps, don't stop at first error.
+Documentation Rules
+
+For EVERY completed task:
+
+1. Update a single file:
+
+docs/PROJECT_LOG.md
+
+2. Never create additional documentation files unless explicitly requested.
+
+3. Append a new entry to PROJECT_LOG.md using the format:
+
+---
+
+[DATE] Task Title
+
+Objective
+
+What needed to be done.
+
+Changes Made
+
+Detailed list of changes.
+
+Files Modified
+
+- file1
+- file2
+
+Database Changes
+
+- None
+
+or
+
+- Added table ...
+- Added column ...
+
+Environment Variables
+
+- None
+
+or
+
+- NEW_VARIABLE
+
+Validation
+
+- npm run lint
+- npm run typecheck
+- npm run build
+
+Result:
+PASS / FAIL
+
+Manual Testing
+
+Steps performed.
+
+Security Review
+
+Potential security concerns found.
+
+Performance Review
+
+Potential performance concerns found.
+
+Known Issues
+
+Remaining issues.
+
+Recommended Next Steps
+
+Priority High:
+
+Priority Medium:
+
+Priority Low:
+
+Setup Notes
+
+Any setup or deployment steps required after this change.
+
+---
+
+4. Every new task must be appended to the bottom of PROJECT_LOG.md.
+
+5. PROJECT_LOG.md acts as:
+
+- Changelog
+- Project journal
+- Setup guide
+- Architecture notes
+- Technical debt tracker
+- Roadmap
+- Developer handover document
+
+6. Never finish a task without updating PROJECT_LOG.md.
