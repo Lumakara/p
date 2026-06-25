@@ -90,47 +90,11 @@ export const env = {
   },
 
   // ============================================================================
-  // FIREBASE CLIENT (PUBLIC)
+  // AUTH.JS (NEXTAUTH)
   // ============================================================================
-  firebaseClient: {
-    apiKey: optional(
-      process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      "mock_api_key_for_nextjs_build"
-    ),
-    authDomain: optional(
-      process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      "mock-project.firebaseapp.com"
-    ),
-    projectId: optional(
-      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      "mock-project"
-    ),
-    storageBucket: optional(
-      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      "mock-project.appspot.com"
-    ),
-    messagingSenderId: optional(
-      process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      "000000000000"
-    ),
-    appId: optional(
-      process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-      "1:000000000000:web:0000000000000000000000"
-    ),
-    isConfigured: Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY),
-  },
-
-  // ============================================================================
-  // FIREBASE ADMIN (PRIVATE)
-  // ============================================================================
-  firebaseAdmin: {
-    projectId: optional(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID),
-    clientEmail: optional(process.env.NEXT_FIREBASE_CLIENT_EMAIL),
-    privateKey: optional(process.env.NEXT_FIREBASE_PRIVATE_KEY),
-    isConfigured:
-      Boolean(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) &&
-      Boolean(process.env.NEXT_FIREBASE_CLIENT_EMAIL) &&
-      Boolean(process.env.NEXT_FIREBASE_PRIVATE_KEY),
+  auth: {
+    secret: required("NEXTAUTH_SECRET", process.env.NEXTAUTH_SECRET),
+    url: optional(process.env.NEXTAUTH_URL, "http://localhost:3000"),
   },
 
   // ============================================================================
@@ -250,13 +214,15 @@ export const env = {
   // ============================================================================
   // ADMIN
   // ============================================================================
-  admin: {
-    userIds: optional(process.env.ADMIN_USER_IDS || process.env.NEXT_ADMIN_USER_IDS)
-      .split(",")
-      .map((id) => id.trim())
-      .filter(Boolean),
-  },
-};
+/**
+ * Get list of admin user IDs from environment variable.
+ */
+export function adminIds(): string[] {
+  return (process.env.NEXT_ADMIN_USER_IDS || process.env.ADMIN_USER_IDS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 // ============================================================================
 // VALIDATION

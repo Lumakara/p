@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { env } from "@/config/env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const BASE_URL =
-  process.env.PAYMENT_BASE_URL ||
-  process.env.NEXT_PAYMENT_BASE_URL ||
-  "https://ramashop.my.id/api/public";
-const API_KEY =
-  process.env.PAYMENT_API_KEY || process.env.NEXT_PAYMENT_API_KEY || "";
+const BASE_URL = env.payment.baseUrl;
+const API_KEY = env.payment.apiKey;
 
 /** GET /api/admin/payment/history — fetch transaction history from RamaShop. */
 export async function GET() {

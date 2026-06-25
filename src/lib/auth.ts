@@ -1,68 +1,48 @@
+import { auth } from "@/auth";
 import { prisma } from "@/db/client";
-import { cookies } from "next/headers";
+import { adminIds } from "@/config/env";
 
-import { adminAuth } from "@/config/firebase-admin";
-
-/** 
+/**
  * Auth helpers (server-side).
- * Replaced Clerk with a simple guest cookie mechanism and Firebase Token verification.
+ * Uses Auth.js v5 for session management.
  */
 
-export function adminIds(): string[] {
-  return (process.env.NEXT_ADMIN_USER_IDS || process.env.ADMIN_USER_IDS || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+export async function getSession() {
+  return await auth();
 }
 
-export async function getSessionId(): Promise<string> {
-  const cookieStore = await cookies();
+export async function getCurrentUser() {
+  const session = await getSession();
+  if (!session?.user?.id) return null;
 
-  // Prefer the authenticated Firebase uid when available.
-  const firebaseToken = cookieStore.get("firebase_token")?.value;
-  if (firebaseToken) {
-    try {
-      const decoded = await adminAuth.verifyIdToken(firebaseToken);
-      return decoded.uid;
-    } catch {
-      // Token invalid/expired — fall through to guest id.
-    }
-  }
-
-  const sid = cookieStore.get("guest_id")?.value;
-  return sid || "guest_anon";
+  return await prisma.user.findUnique({
+    where: { id: session.user.id },
+  });
 }
 
 export async function isAdmin(): Promise<boolean> {
-  // In development, or if ADMIN_OPEN is explicitly "true", bypass authentication check for ease of testing.
+  // In development, bypass for ease of testing
   if (process.env.NODE_ENV !== "production" || process.env.ADMIN_OPEN === "true") {
     return true;
   }
 
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("firebase_token")?.value;
-    if (!token) return false;
+    const session = await getSession();
+    if (!session?.user?.id) return false;
 
-    // Verify token using Firebase Admin SDK
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    const uid = decodedToken.uid;
-
-    // 1. Check if UID is explicitly in ADMIN_USER_IDS environment variable
-    if (adminIds().includes(uid)) {
+    // Check if user ID is in ADMIN_USER_IDS env var
+    const adminList = adminIds();
+    if (adminList.includes(session.user.id)) {
       return true;
     }
 
-    // 2. Check if database user is configured as an ADMIN
-    const dbUser = await prisma.user.findUnique({
-      where: { id: uid },
+    // Check database for ADMIN role
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
       select: { role: true },
     });
-    if (dbUser && dbUser.role === "ADMIN") {
-      return true;
-    }
 
-    return false;
+    return user?.role === "ADMIN";
   } catch (err) {
     console.error("[auth/isAdmin] failed to check admin status:", err);
     return false;
@@ -70,33 +50,16 @@ export async function isAdmin(): Promise<boolean> {
 }
 
 export async function requireAdmin(): Promise<string> {
-  try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("firebase_token")?.value;
-    if (token) {
-      const decodedToken = await adminAuth.verifyIdToken(token);
-      const uid = decodedToken.uid;
-      
-      const isUserAdmin = adminIds().includes(uid) || 
-        (await prisma.user.findUnique({ where: { id: uid }, select: { role: true } }))?.role === "ADMIN";
-      
-      if (isUserAdmin || process.env.NODE_ENV !== "production" || process.env.ADMIN_OPEN === "true") {
-        return uid;
-      }
-    }
-  } catch (err) {
-    console.error("[auth/requireAdmin] error verifying admin token:", err);
-  }
+  const session = await getSession();
+  if (!session?.user?.id) throw new Error("UNAUTHORIZED");
 
-  // Fallback for dev/ADMIN_OPEN if token is missing
-  if (process.env.NODE_ENV !== "production" || process.env.ADMIN_OPEN === "true") {
-    return "admin_dev";
-  }
+  const isUserAdmin = await isAdmin();
+  if (!isUserAdmin) throw new Error("FORBIDDEN");
 
-  throw new Error("FORBIDDEN");
+  return session.user.id;
 }
 
 export async function syncCurrentUser() {
-  // Removed Clerk implementation.
+  // Session already synced by Auth.js adapter
   return null;
 }
