@@ -1,0 +1,12 @@
+{
+  "body": {
+    "size": 16,
+    "lineHeight": 1.6,
+    "weight": 400
+  },
+  "heading": {
+    "size": 32,
+    "lineHeight": 1.15,
+    "weight": 600
+  }
+}
